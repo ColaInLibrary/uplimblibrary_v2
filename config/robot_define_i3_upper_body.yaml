@@ -1,0 +1,112 @@
+URDF_FILE: /home/nav01/Downloads/xenomai-stabe-v4/uplimlibrary/config/robot_define_i3_upper_body.yaml
+JOINTS_LIST:
+  - Shoulder_Y_L:
+      pos_limit: [-3.197, 1.02]
+      offset_vel: 0
+      driverNum: 0
+      algNum: 0
+      f_a: 2.44
+      f_b: 1.20
+      f_c: 1.20
+  - Shoulder_X_L:
+      pos_limit: [0.000, 2.6]
+      offset_vel: 0
+      driverNum: 1
+      algNum: 1
+      f_a: 1.35
+      f_b: 1.83
+      f_c: -0.52
+  - Shoulder_Z_L:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 2
+      algNum: 2
+      f_a: 1.46
+      f_b: 1.70
+      f_c: 0.02
+  - Elbow_L:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 1
+      driverNum: 3
+      algNum: 3
+      f_a: 1.66
+      f_b: 0.59
+      f_c: 0.78
+  - Shoulder_Y_R:
+      pos_limit: [-3.197, 1.02]
+      offset_vel: 0
+      driverNum: 4
+      algNum: 4
+      f_a: 2.72
+      f_b: 1.64
+      f_c: 1.11
+  - Shoulder_X_R:
+      pos_limit: [-2.6, 0.000]
+      offset_vel: 0
+      driverNum: 5
+      algNum: 5
+      f_a: 2.90
+      f_b: 1.00
+      f_c: 1.14
+  - Shoulder_Z_R:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 6
+      algNum: 6
+      f_a: 1.33
+      f_b: 1.49
+      f_c: 0.00
+  - Elbow_R:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 1
+      driverNum: 7
+      algNum: 7
+      f_a: 2.44
+      f_b: 0.69
+      f_c: 0.79
+  - Neck_Z:
+      pos_limit: [-0.733, 0.733]
+      offset_vel: 1
+      driverNum: 8
+      algNum: 8
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+  - Neck_Y:
+      pos_limit: [-0.122, 0.297]
+      offset_vel: 1
+      driverNum: 9
+      algNum: 9
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00  
+  - Waist_Z:
+      pos_limit: [-0.520, 0.520]
+      offset_vel: 0
+      driverNum: 10
+      algNum: 10
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+    - Waist_X:
+      pos_limit: [-0.260, 0.260]
+      offset_vel: 0
+      driverNum: 11
+      algNum: 11
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00   
+    - Waist_Y:
+      pos_limit: [-0.520, 0.260]
+      offset_vel: 0
+      driverNum: 12
+      algNum: 12
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00    
+
+F_S_K: 0.01
+
+CONTROLLER_PARA_PATH: /home/nav01/Downloads/xenomai-stabe-v4/uplimlibrary/config/controller_paras_i3_upper_body.yaml
+
+POSITION_THRESHOLD: 0.005

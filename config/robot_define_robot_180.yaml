@@ -1,0 +1,126 @@
+URDF_FILE: /home/nav01/Documents/uplimlibrary/models/models/Robot_180.urdf
+JOINTS_LIST:
+  - Shoulder_Y_L:
+      pos_limit: [-3.197, 1.145]
+      offset_vel: 0
+      driverNum: 0
+      algNum: 0
+      f_a: 2.44
+      f_b: 1.20
+      f_c: 1.20
+  - Shoulder_X_L:
+      pos_limit: [-0.020, 3.026]
+      offset_vel: 0
+      driverNum: 1
+      algNum: 1
+      f_a: 1.35
+      f_b: 1.83
+      f_c: -0.52
+  - Shoulder_Z_L:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 2
+      algNum: 2
+      f_a: 1.46
+      f_b: 1.70
+      f_c: 0.02
+  - Elbow_L:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 1
+      driverNum: 3
+      algNum: 3
+      f_a: 1.66
+      f_b: 0.59
+      f_c: 0.78
+  - Wrist_Z_L:
+      pos_limit: [-2.855, 2.855]
+      offset_vel: 0
+      driverNum: 4
+      algNum: 4
+      f_a: 0.49
+      f_b: 0.61
+      f_c: 0.00
+  - Wrist_Y_L:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 5
+      algNum: 5
+      f_a: 0.67
+      f_b: 0.06
+      f_c: 0.10
+  - Wrist_X_L:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 6
+      algNum: 6
+      f_a: 0.52
+      f_b: 0.37
+      f_c: -0.19
+  - Shoulder_Y_R:
+      pos_limit: [-3.197, 1.145]
+      offset_vel: 0
+      driverNum: 7
+      algNum: 7
+      f_a: 2.72
+      f_b: 1.64
+      f_c: 1.11
+  - Shoulder_X_R:
+      pos_limit: [-3.026, 0.02]
+      offset_vel: 0
+      driverNum: 8
+      algNum: 8
+      f_a: 2.90
+      f_b: 1.00
+      f_c: 1.14
+  - Shoulder_Z_R:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 9
+      algNum: 9
+      f_a: 1.33
+      f_b: 1.49
+      f_c: 0.00
+  - Neck_Z:
+      pos_limit: [-0.733, 0.733]
+      offset_vel: 1
+      driverNum: 10
+      algNum: 10
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+  - Neck_Y:
+      pos_limit: [-0.122, 0.297]
+      offset_vel: 1
+      driverNum: 11
+      algNum: 11
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+  - Waist_Z:
+      pos_limit: [-1.57, 0.785]
+      offset_vel: 1
+      driverNum: 12
+      algNum: 12
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00    
+  - Waist_Y:
+      pos_limit: [-0.523, 0.523]
+      offset_vel: 1
+      driverNum: 13
+      algNum: 13
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+
+CHAIN_LEFT: [12, 13, 0, 1, 2, 3, 4, 5, 6]
+
+CHAIN_RIGHT: [12, 13, 7, 8, 9]
+
+F_S_K: 0.005
+
+COLLISION_DETECTION_ON: false
+
+POSITION_THRESHOLD: 0.005
+
+CONTROLLER_PARA_PATH: /home/nav01/Downloads/xenomai-stabe-v4/uplimlibrary/config/controller_paras_robot_180.yaml

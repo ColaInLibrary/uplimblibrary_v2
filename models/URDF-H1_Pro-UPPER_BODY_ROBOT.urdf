@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-1-g15f4949  Build Version: 1.6.7594.29634
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="UpperBody">
+  <link name="world"/>  
+  <link
+    name="SACRUM">
+    <inertial>
+      <origin
+        xyz="0.000363258570221639 2.18022752318994E-05 -0.0509237785395715"
+        rpy="0 0 0" />
+      <mass
+        value="3.0664894822196" />
+      <inertia
+        ixx="0.00341185082526283"
+        ixy="-1.27297699274269E-06"
+        ixz="-1.04370951037244E-05"
+        iyy="0.00282908180770939"
+        iyz="-1.61925806048163E-07"
+        izz="0.0056752649254587" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/SACRUM.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.498039215686275 0.498039215686275 0.498039215686275 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/SACRUM.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base" type="fixed">
+    <parent link="world"/>
+    <child link="SACRUM"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>  
+  <link
+    name="TORSO">
+    <inertial>
+      <origin
+        xyz="0.00381458680825118 -9.00326271115071E-05 0.173643088441469"
+        rpy="0 0 0" />
+      <mass
+        value="20.9415834527824" />
+      <inertia
+        ixx="0.200605110275063"
+        ixy="-5.96719638011728E-06"
+        ixz="-0.000598862306997388"
+        iyy="0.138484356951452"
+        iyz="-1.9914238090964E-05"
+        izz="0.0794584460133347" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/TORSO.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.498039215686275 0.498039215686275 0.498039215686275 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="A_Waist"
+    type="revolute">
+    <origin
+      xyz="0 0 0.0694"
+      rpy="0 0 0" />
+    <parent
+      link="SACRUM" />
+    <child
+      link="TORSO" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.523"
+      upper="0.523"
+      effort="31.2"
+      velocity="7.85" />
+  </joint>
+  <link
+    name="SCAPULA_R">
+    <inertial>
+      <origin
+        xyz="-0.000401937500324315 -0.070257899546168 -9.25479085875924E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.11869125769787" />
+      <inertia
+        ixx="0.00101089708988311"
+        ixy="3.37675756375303E-05"
+        ixz="-2.13792250014011E-06"
+        iyy="0.00117729157298402"
+        iyz="4.40088660471187E-06"
+        izz="0.00124013574340955" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/SCAPULA_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Shoulder_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 -0.15869 0.29644"
+      rpy="-0.34907 0 0" />
+    <parent
+      link="TORSO" />
+    <child
+      link="SCAPULA_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-3.31"
+      upper="1.22"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="SHOULDER_R">
+    <inertial>
+      <origin
+        xyz="0.00283954508764005 -0.000290453030511034 -0.00781146623981233"
+        rpy="0 0 0" />
+      <mass
+        value="0.240960688218916" />
+      <inertia
+        ixx="0.000871350750268504"
+        ixy="-1.133373231086E-05"
+        ixz="-0.0001187386175191"
+        iyy="0.00129082936762032"
+        iyz="-1.28347858347467E-05"
+        izz="0.00121698875494612" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/SHOULDER_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Shoulder_X_R"
+    type="revolute">
+    <origin
+      xyz="0 -0.075202 0"
+      rpy="0.34907 0 0" />
+    <parent
+      link="SCAPULA_R" />
+    <child
+      link="SHOULDER_R" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-3.14"
+      upper="0.008"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="UPPERARM_R">
+    <inertial>
+      <origin
+        xyz="-0.000571659780097766 -0.000199247313657919 -0.0735209654996667"
+        rpy="0 0 0" />
+      <mass
+        value="1.68420819192536" />
+      <inertia
+        ixx="0.00185803202143857"
+        ixy="7.58322104437113E-09"
+        ixz="-4.9859741496866E-06"
+        iyy="0.00192700443007511"
+        iyz="3.88655793452567E-06"
+        izz="0.000957768401473131" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/UPPERARM_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Shoulder_Z_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0845"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_R" />
+    <child
+      link="UPPERARM_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.94"
+      upper="2.94"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="FOREARM_R">
+    <inertial>
+      <origin
+        xyz="-0.00302172787910891 0.00211861533015464 -0.0303563393686659"
+        rpy="0 0 0" />
+      <mass
+        value="0.21053061857942" />
+      <inertia
+        ixx="0.000244308546123796"
+        ixy="1.13420120740484E-06"
+        ixz="-1.189763880639E-06"
+        iyy="0.000196529853619526"
+        iyz="5.46641539222367E-05"
+        izz="0.000233765345919913" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/FOREARM_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Elbow_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1555"
+      rpy="0 0 0" />
+    <parent
+      link="UPPERARM_R" />
+    <child
+      link="FOREARM_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.09"
+      upper="0.08"
+      effort="31"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="WRIST_REVOLUTE_R">
+    <inertial>
+      <origin
+        xyz="-2.28678908277546E-06 -0.00103315908083768 -0.0647883014674135"
+        rpy="0 0 0" />
+      <mass
+        value="1.37742377157804" />
+      <inertia
+        ixx="0.00107361601278945"
+        ixy="-4.93503255086796E-08"
+        ixz="1.36181337440367E-06"
+        iyy="0.00109354557490534"
+        iyz="-6.35626107623425E-06"
+        izz="0.000919944427346984" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/WRIST_REVOLUTE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_Z_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0685"
+      rpy="0 0 0" />
+    <parent
+      link="FOREARM_R" />
+    <child
+      link="WRIST_REVOLUTE_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.96"
+      upper="2.96"
+      effort="25"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="WRIST_UPDOWN_R">
+    <inertial>
+      <origin
+        xyz="0.00177553041916981 -0.000951367016974264 -0.0498781731033018"
+        rpy="0 0 0" />
+      <mass
+        value="0.375136637664984" />
+      <inertia
+        ixx="0.000182813399202786"
+        ixy="-3.46428706721997E-06"
+        ixz="8.19530604165114E-06"
+        iyy="0.000181540510429551"
+        iyz="3.14034226315542E-05"
+        izz="0.000143251022158048" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/WRIST_UPDOWN_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1385"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_REVOLUTE_R" />
+    <child
+      link="WRIST_UPDOWN_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="7"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="WRIST_FLANGE_R">
+    <inertial>
+      <origin
+        xyz="4.81686568690187E-05 -0.000261133608787628 -0.0220529522855544"
+        rpy="0 0 0" />
+      <mass
+        value="0.0624994939924641" />
+      <inertia
+        ixx="3.13482699291035E-05"
+        ixy="-1.65761610366564E-07"
+        ixz="-9.9945332638628E-06"
+        iyy="4.02521348249306E-05"
+        iyz="-3.56453666385467E-07"
+        izz="3.08919748816135E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/WRIST_FLANGE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_X_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.063"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_UPDOWN_R" />
+    <child
+      link="WRIST_FLANGE_R" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="7"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="TCP_R">
+    <inertial>
+      <origin
+        xyz="0.00170185052441145 -0.000788384398018871 0.00447737078431643"
+        rpy="0 0 0" />
+      <mass
+        value="0.00879311787281887" />
+      <inertia
+        ixx="1.19188171381668E-06"
+        ixy="-2.4235239419721E-09"
+        ixz="5.84275876856099E-10"
+        iyy="1.21946315503552E-06"
+        iyz="-1.22220277215999E-10"
+        izz="2.34905099560954E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/TCP_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Tcp_R"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.060997"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_FLANGE_R" />
+    <child
+      link="TCP_R" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="HAND_R">
+    <inertial>
+      <origin
+        xyz="-0.00915546813147937 -0.00203315095548906 0.0667981643225093"
+        rpy="0 0 0" />
+      <mass
+        value="0.708771373663588" />
+      <inertia
+        ixx="0.000156880093297815"
+        ixy="2.76330225116286E-06"
+        ixz="1.05327506158678E-05"
+        iyy="0.000211542804577115"
+        iyz="-4.80457957713526E-06"
+        izz="9.44144286032035E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/HAND_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Hand_R"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="-3.14159265358979 0 3.14159265358979" />
+    <parent
+      link="TCP_R" />
+    <child
+      link="HAND_R" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="SCAPULA_L">
+    <inertial>
+      <origin
+        xyz="-0.000401960497935547 0.0702578347208159 -9.26072263573996E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.11869147671959" />
+      <inertia
+        ixx="0.00101089452674763"
+        ixy="-3.37688169319261E-05"
+        ixz="-2.1396855062161E-06"
+        iyy="0.00117729268649338"
+        iyz="-4.45359528483916E-06"
+        izz="0.00124013280042412" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/SCAPULA_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.341176470588235 1 0.768627450980392 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Shoulder_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0.15869 0.29644"
+      rpy="0.34907 0 0" />
+    <parent
+      link="TORSO" />
+    <child
+      link="SCAPULA_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-3.31"
+      upper="1.22"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="SHOULDER_L">
+    <inertial>
+      <origin
+        xyz="0.0216733113596856 0.00136795933239944 -0.036387819054938"
+        rpy="0 0 0" />
+      <mass
+        value="0.240960688218916" />
+      <inertia
+        ixx="0.000357797238571209"
+        ixy="1.12737208276028E-05"
+        ixz="-0.000118749625579955"
+        iyy="0.000434045371215851"
+        iyz="1.27859685712117E-05"
+        izz="0.000360203012411998" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/SHOULDER_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Shoulder_X_L"
+    type="revolute">
+    <origin
+      xyz="0 0.075202 0"
+      rpy="-0.34907 0 0" />
+    <parent
+      link="SCAPULA_L" />
+    <child
+      link="SHOULDER_L" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-0.008"
+      upper="3.14"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="UPPERARM_L">
+    <inertial>
+      <origin
+        xyz="-0.000571741478881255 0.000196200656739143 -0.0734511646910936"
+        rpy="0 0 0" />
+      <mass
+        value="1.68419694822414" />
+      <inertia
+        ixx="0.00185802511089415"
+        ixy="9.09225406955562E-09"
+        ixz="-5.80056648124043E-06"
+        iyy="0.00192698971439738"
+        iyz="-3.90953996597225E-06"
+        izz="0.000957757985702682" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/UPPERARM_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.0431372549019608 1 0.909803921568627 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Shoulder_Z_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0845"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_L" />
+    <child
+      link="UPPERARM_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.94"
+      upper="2.94"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="FOREARM_L">
+    <inertial>
+      <origin
+        xyz="-0.00293207363173763 -0.00206216218152966 -0.0303657371477064"
+        rpy="0 0 0" />
+      <mass
+        value="0.209760466331681" />
+      <inertia
+        ixx="0.000243755635680283"
+        ixy="-6.32782423053974E-07"
+        ixz="-1.35105814505604E-06"
+        iyy="0.000195974985700233"
+        iyz="-5.48501310597285E-05"
+        izz="0.000232807786705591" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/FOREARM_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Elbow_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1555"
+      rpy="0 0 0" />
+    <parent
+      link="UPPERARM_L" />
+    <child
+      link="FOREARM_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.09"
+      upper="0.08"
+      effort="31"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="WRIST_REVOLUTE_L">
+    <inertial>
+      <origin
+        xyz="-2.4002862523409E-06 0.00103315831420647 -0.0647884359059077"
+        rpy="0 0 0" />
+      <mass
+        value="1.37743339803104" />
+      <inertia
+        ixx="0.00107362286145462"
+        ixy="4.71467127174787E-08"
+        ixz="1.36173447109358E-06"
+        iyy="0.00109354867897826"
+        iyz="6.34468404977135E-06"
+        izz="0.00091994929980494" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/WRIST_REVOLUTE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_Z_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0685"
+      rpy="0 0 0" />
+    <parent
+      link="FOREARM_L" />
+    <child
+      link="WRIST_REVOLUTE_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.96"
+      upper="2.96"
+      effort="25"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="WRIST_UPDOWN_L">
+    <inertial>
+      <origin
+        xyz="0.00177864835486408 0.000912027432453139 -0.0499619643783076"
+        rpy="0 0 0" />
+      <mass
+        value="0.374569672574128" />
+      <inertia
+        ixx="0.000181567374258762"
+        ixy="3.43826067449833E-06"
+        ixz="8.12901680270467E-06"
+        iyy="0.000180426352360658"
+        iyz="-3.09795264122805E-05"
+        izz="0.000143039142854339" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/WRIST_UPDOWN_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1385"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_REVOLUTE_L" />
+    <child
+      link="WRIST_UPDOWN_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="7"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="WRIST_FLANGE_L">
+    <inertial>
+      <origin
+        xyz="5.43493865489408E-05 0.000256087873302169 -0.0220484907149958"
+        rpy="0 0 0" />
+      <mass
+        value="0.0625120627785895" />
+      <inertia
+        ixx="3.13622097247625E-05"
+        ixy="1.69954477707357E-07"
+        ixz="-9.99951820792566E-06"
+        iyy="4.02627130698373E-05"
+        iyz="3.63814763307399E-07"
+        izz="3.08984941495122E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/WRIST_FLANGE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Wrist_X_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.063"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_UPDOWN_L" />
+    <child
+      link="WRIST_FLANGE_L" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="7"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="TCP_L">
+    <inertial>
+      <origin
+        xyz="0.00170185052441117 -0.000788384398018899 0.00447737078433019"
+        rpy="0 0 0" />
+      <mass
+        value="0.00879311787281881" />
+      <inertia
+        ixx="1.19188171381668E-06"
+        ixy="-2.42352394197315E-09"
+        ixz="5.84275876819325E-10"
+        iyy="1.21946315503551E-06"
+        iyz="-1.22220277219029E-10"
+        izz="2.34905099560953E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/TCP_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Tcp_L"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.0609966943419677"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_FLANGE_L" />
+    <child
+      link="TCP_L" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="HAND_L">
+    <inertial>
+      <origin
+        xyz="-0.00893713208279127 0.00154201093141951 0.0668059164208354"
+        rpy="0 0 0" />
+      <mass
+        value="0.708722308298029" />
+      <inertia
+        ixx="0.000157530701068438"
+        ixy="-2.55587467367548E-06"
+        ixz="9.86652857175265E-06"
+        iyy="0.00021076984308405"
+        iyz="5.47321208249207E-06"
+        izz="9.43942944232525E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/HAND_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Hand_L"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="-3.14159265358979 0 3.14159265358979" />
+    <parent
+      link="TCP_L" />
+    <child
+      link="HAND_L" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="NECK">
+    <inertial>
+      <origin
+        xyz="2.52993515192923E-06 0.000544162367499709 0.0390658906106829"
+        rpy="0 0 0" />
+      <mass
+        value="0.312991393390387" />
+      <inertia
+        ixx="5.11377406618343E-05"
+        ixy="-4.01417961983921E-09"
+        ixz="1.22034594067265E-08"
+        iyy="7.8331242537593E-05"
+        iyz="3.48786160171647E-06"
+        izz="4.68550717888899E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/NECK.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.698039215686274 0.698039215686274 0.698039215686274 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Neck_Z"
+    type="revolute">
+    <origin
+      xyz="0 0 0.43204"
+      rpy="0 0 0" />
+    <parent
+      link="TORSO" />
+    <child
+      link="NECK" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.785"
+      upper="0.785"
+      effort="7"
+      velocity="3.66" />
+  </joint>
+  <link
+    name="HEAD">
+    <inertial>
+      <origin
+        xyz="0.0146217206801064 -0.00112164903509494 0.0659573364202655"
+        rpy="0 0 0" />
+      <mass
+        value="0.678814435892979" />
+      <inertia
+        ixx="0.000849741722851567"
+        ixy="-1.54064161824939E-06"
+        ixz="-1.87695752849106E-05"
+        iyy="0.000730232748561279"
+        iyz="-8.20250448354247E-06"
+        izz="0.000881299430516002" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://URDF-H1_Pro/meshes/HEAD.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.384313725490196 0.411764705882353 0.450980392156863 1" />
+      </material>
+    </visual>
+  </link>
+  <joint
+    name="Neck_Y"
+    type="revolute">
+    <origin
+      xyz="0 0 0.042"
+      rpy="0 0 0" />
+    <parent
+      link="NECK" />
+    <child
+      link="HEAD" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-0.17"
+      upper="0.34"
+      effort="7"
+      velocity="3.66" />
+  </joint>
+</robot>

@@ -1,0 +1,150 @@
+URDF_FILE: /home/ah/Documents/example_code/robot_models/URDF-H1_Pro/urdf/URDF-H1_Pro-UPPER_BODY_ROBOT.urdf
+JOINTS_LIST:
+  - Shoulder_Y_L:
+      pos_limit: [-3.197, 1.145]
+      offset_vel: 0
+      driverNum: 0
+      algNum: 0
+      f_a: 2.33
+      f_b: 1.74
+      f_c: 0.95
+  - Shoulder_X_L:
+      pos_limit: [0.000, 3.026]
+      offset_vel: 0
+      driverNum: 1
+      algNum: 1
+      f_a: 1.51
+      f_b: 3.03
+      f_c: -0.58
+  - Shoulder_Z_L:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 2
+      algNum: 2
+      f_a: 1.46
+      f_b: 1.55
+      f_c: -0.02
+  - Elbow_L:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 1
+      driverNum: 3
+      algNum: 3
+      f_a: 3.26
+      f_b: 0.46
+      f_c: 0.62
+  - Wrist_Z_L:
+      pos_limit: [-2.855, 2.855]
+      offset_vel: 0
+      driverNum: 4
+      algNum: 4
+      f_a: 0.60
+      f_b: 0.75
+      f_c: -0.01
+  - Wrist_Y_L:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 5
+      algNum: 5
+      f_a: 0.46
+      f_b: 0.50
+      f_c: 0.00
+  - Wrist_X_L:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 6
+      algNum: 6
+      f_a: 0.69
+      f_b: 0.16
+      f_c: 0.01
+  - Shoulder_Y_R:
+      pos_limit: [-3.197, 1.145]
+      offset_vel: 0
+      driverNum: 7
+      algNum: 7
+      f_a: 1.92
+      f_b: 1.81
+      f_c: 1.05
+  - Shoulder_X_R:
+      pos_limit: [-3.026, 0.000]
+      offset_vel: 0
+      driverNum: 8
+      algNum: 8
+      f_a: 1.74
+      f_b: 1.17
+      f_c: 1.08
+  - Shoulder_Z_R:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 9
+      algNum: 9
+      f_a: 2.96
+      f_b: 1.65
+      f_c: 0.00
+  - Elbow_R:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 1
+      driverNum: 10
+      algNum: 10
+      f_a: 1.85
+      f_b: 0.80
+      f_c: 0.62
+  - Wrist_Z_R:
+      pos_limit: [-2.855, 2.855]
+      offset_vel: 0
+      driverNum: 11
+      algNum: 11
+      f_a: 0.52
+      f_b: 0.62
+      f_c: -0.01
+  - Wrist_Y_R:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 12
+      algNum: 12
+      f_a: 0.50
+      f_b: -0.03
+      f_c: -0.04
+  - Wrist_X_R:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 13
+      algNum: 13
+      f_a: 0.37
+      f_b: 0.48
+      f_c: 0.04
+  - Neck_Z:
+      pos_limit: [-0.733, 0.733]
+      offset_vel: 1
+      driverNum: 14
+      algNum: 14
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+  - Neck_Y:
+      pos_limit: [-0.122, 0.297]
+      offset_vel: 1
+      driverNum: 15
+      algNum: 15
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+  - A_Waist:
+      pos_limit: [-1.518, 1.518]
+      offset_vel: 0
+      driverNum: 16
+      algNum: 16
+      f_a: 0.00
+      f_b: 0.00
+      f_c: 0.00
+
+CHAIN_LEFT: [16, 0, 1, 2, 3, 4, 5, 6]
+
+CHAIN_RIGHT: [16, 7, 8, 9, 10, 11, 12, 13]
+
+F_S_K: 0.005
+
+COLLISION_DETECTION_ON: false
+
+POSITION_THRESHOLD: 0.005
+
+CONTROLLER_PARA_PATH: /home/ah/Documents/cpp_code/uplimblibrary_v2/config/controller_paras_upper_body.yaml

@@ -1,0 +1,85 @@
+URDF_FILE: /home/nav01/Documents/uplimlibrary/models/A3_Pro_dual_arm.urdf
+JOINTS_LIST:
+  - Torso-Z-L:
+      pos_limit: [-0.349, 0.349]
+      offset_vel: 0
+      driverNum: 0
+      algNum: 0
+  - Shoulder_Y_L:
+      pos_limit: [-3.197, 1.145]
+      offset_vel: 0
+      driverNum: 1
+      algNum: 1
+  - Shoulder_X_L:
+      pos_limit: [-0.020, 3.026]
+      offset_vel: 0
+      driverNum: 2
+      algNum: 2
+  - Shoulder_Z_L:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 3
+      algNum: 3
+  - Elbow_L:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 0
+      driverNum: 4
+      algNum: 4
+  - Wrist_Z_L:
+      pos_limit: [-2.855, 2.855]
+      offset_vel: 0
+      driverNum: 5
+      algNum: 5
+  - Wrist_Y_L:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 6
+      algNum: 6
+  - Wrist_X_L:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 7
+      algNum: 7
+  - Torso-Z-R:
+      pos_limit: [ -0.349, 0.349 ]
+      offset_vel: 0
+      driverNum: 8
+      algNum: 8
+  - Shoulder_Y_R:
+      pos_limit: [-3.197, 1.145]
+      offset_vel: 0
+      driverNum: 9
+      algNum: 9
+  - Shoulder_X_R:
+      pos_limit: [-3.026, 0.02]
+      offset_vel: 0
+      driverNum: 10
+      algNum: 10
+  - Shoulder_Z_R:
+      pos_limit: [-2.830, 2.830]
+      offset_vel: 0
+      driverNum: 11
+      algNum: 11
+  - Elbow_R:
+      pos_limit: [-2.000, 0.070]
+      offset_vel: 0
+      driverNum: 12
+      algNum: 12
+  - Wrist_Z_R:
+      pos_limit: [-2.855, 2.855]
+      offset_vel: 0
+      driverNum: 13
+      algNum: 13
+  - Wrist_Y_R:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 14
+      algNum: 14
+  - Wrist_X_R:
+      pos_limit: [-1.487, 1.487]
+      offset_vel: 1
+      driverNum: 15
+      algNum: 15
+
+
+POSITION_THRESHOLD: 0.005

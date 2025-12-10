@@ -1,0 +1,345 @@
+/**
+ ******************************************************************************
+ * @Description   :
+ * @author        : AN Hao
+ * @Date          : 25-1-14
+ * @Version       : 0.0.1
+ * @File          : SShapeVelocity.h
+ ******************************************************************************
+ */
+
+#ifndef UL_SRC_UL_MATH_SSHAPEVELOCITY_H_
+#define UL_SRC_UL_MATH_SSHAPEVELOCITY_H_
+#include <ul/std/common.h>
+#include <ul/math/algorithm.h>
+
+#include <cmath>
+#include <iostream>
+
+#include "Real.h"
+
+namespace ul {
+namespace math {
+template <typename T>
+class SShapeVelocity {
+ public:
+  /**
+   * @brief : Calculate the acceleration
+   * @param t : Current time_
+   * @return : Current Acceleration
+   */
+  T a(const Real& t) {
+    if (t < 0) {
+      return 0;
+    } else if (t < Tj1_) {                // case 1: 加速度上升
+//      ::std::cout << "case 1: t = " << t << ", Tj1_ = " << Tj1_ << ::std::endl;
+      return delta_ * jm_ * t;
+    } else if (t < Ta_ - Tj1_) {          // case 2: 加速度匀速
+//      ::std::cout << "case 2: t = " << t << ", Ta_ = " << Ta_ << ::std::endl;
+      return delta_ * am_;
+    } else if (t < Ta_) {                 // case 3: 加速度减小
+//      ::std::cout << "case 3: t = " << t << ", Ta_ = " << Ta_ << ::std::endl;
+      return delta_ * jm_ * (Ta_ - t);
+    } else if (t < Ta_ + Tv_) {           // case 4: 加速度为0
+//      ::std::cout << "case 4: t = " << t << ", Tv_ = " << Tv_ << ::std::endl;
+      return 0;
+    } else if (t < time_ - Td_ + Tj2_) {  // case 5: 减速度增大
+//      ::std::cout << "case 5: t = " << t << ", Tj2_ = " << Tj2_ << ::std::endl;
+      return -jm_ * (t - time_ + Td_) * delta_;
+    } else if (t < time_ - Tj2_) {        // case 6: 减速度匀速
+//      ::std::cout << "case 6: t = " << t << ", Td_ = " << Td_ << ::std::endl;
+      return -dm_ * delta_;
+    } else if (t < time_) {               // case 7: 减速度减小
+//      ::std::cout << "case 7: t = " << t << ", time_ = " << time_ << ::std::endl;
+      return -jm_ * (time_ - t) * delta_;
+    } else {                              // case 8: 超过规划时间的情况
+//      ::std::cout << "case 8: t = " << t << ", time_ = " << time_ << ::std::endl;
+      return 0;
+    }
+  }
+
+  bool interpolate() {
+//    ::std::cout << BLUE << "x0_ = " << x0_ << ", xe_ = " << xe_ << RESET << ::std::endl;
+    if (abs(xe_ - x0_) < 1e-5) { return false; }  // 轨迹长度为0， 无需规划
+    if (abs(am_) == 0) {
+      ::std::cout << RED << "[ERROR SShape]: input parameter 'a' is zero!" << RESET << ::std::endl;
+      return false;
+    }
+
+    T err = xe_ - x0_;
+    delta_ = ::ul::math::sign(err);
+    T jmin_ = -abs(jm_);  // min jerk
+    T jmax_ = abs(jm_);   // max jerk
+    T vmin_ = -abs(vm_);
+    T vmax_ = abs(vm_);
+    T amin_ = -abs(am_);
+    T amax_ = abs(am_);
+
+    T vmax = (delta_ + 1) / 2 * vmax_ + (delta_ - 1) / 2 * vmin_;
+    T amax = (delta_ + 1) / 2 * amax_ + (delta_ - 1) / 2 * amin_;
+    T jmax = (delta_ + 1) / 2 * jmax_ + (delta_ - 1) / 2 * jmin_;
+    T vmin = (delta_ + 1) / 2 * vmin_ + (delta_ - 1) / 2 * vmax_;
+    T amin = (delta_ + 1) / 2 * amin_ + (delta_ - 1) / 2 * amax_;
+    T jmin = (delta_ + 1) / 2 * jmin_ + (delta_ - 1) / 2 * jmax_;
+
+    T q0 = delta_ * x0_;
+    T v0_tmp = delta_ * v0_;
+    T q1 = delta_ * xe_;
+    T v1 = delta_ * ve_;
+
+    if (abs(q0 - q1) < 1e-5) { return false; }
+    if (abs(vm_) < 1e-10) { return false;}
+
+    // compute time_
+    T Tj_star = 0;
+    T temp1 = sqrt(abs(v1 - v0_tmp) / jmax);
+    T temp2 = amax / jmax;
+
+//    ::std::cout << YELLOW << "amax = " << amax << ", jmax = " << jmax << ", v1 = " << v1 << ", v0_tmp = " << v0_tmp << ", temp1 = " << temp1 << ", temp2 = " << temp2 << RESET << ::std::endl;
+    // 判断轨迹是否可以求解
+    if (temp1 < temp2) {
+      Tj_star = temp1;
+//      if ((q1 - q0) > Tj_star * (v0_tmp + v1)) {;}
+    } else {
+      Tj_star = temp2;
+//      if ((q1 - q0) > 0.5 * (v0_tmp + v1) * (Tj_star + abs(v1 - v0_tmp) / amax)) {;}
+    }
+
+    // case 1: v_lim = v_max
+    T alima, alimd = 0.0;
+    if ((vmax - v0_tmp) * jmax < amax * amax) {
+      if (v0_tmp > vmax) {  // 初始速度大于最大速度，只需要减速
+//        std::cout << "Init velocity is bigger than v_max, NO AP!" << std::endl;
+        Tj1_ = 0;
+        Ta_ = 0;
+        alima = 0;
+      } else {
+//        std::cout << "a_max is not reached!" << std::endl;
+        Tj1_ = sqrt((vmax - v0_tmp) / jmax);
+        Ta_ = 2 * Tj1_;
+        alima = Tj1_ * jmax;
+      }
+    } else {
+//      std::cout << "a_max is reached!" << std::endl;
+      Tj1_ = amax / jmax;
+      Ta_ = Tj1_ + (vmax - v0_tmp) / amax;
+      alima = amax;
+    }
+
+    if ((vmax - v1) * jmax < amax * amax) {
+      if ((vmax - v1) / jmax < 0) {
+//        ::std::cout << YELLOW << " [Error doubleS_time] vmax is less than v1!" << RESET << ::std::endl;
+      }
+      Tj2_ = sqrt((vmax - v1) / jmax);
+      Td_ = 2 * Tj2_;
+      alimd = Tj2_ * jmax;
+    } else {
+      Tj2_ = amax / jmax;
+      Td_ = Tj2_ + (vmax - v1) / amax;
+      alimd = amax;
+//      ::std::cout << CYAN << "jmax = " << jmax << ", amax = " << amax << RESET << ::std::endl;
+    }
+
+    Tv_ = (q1 - q0) / vmax - Ta_ / 2 * (1 + v0_tmp / vmax) - Td_ / 2 * (1 + v1 / vmax);
+
+    // Case2: v_lim < v_max
+    T delta = 0;
+    T vlim = 0;
+    T vlima, vlimb;
+    T amax_r = amax;  // amax_r 表示用于迭代的最大加速度
+
+    if (Tv_ > 1e-6) {       // 存在匀速运动的过程
+//      std::cout << "Robot can reach the desired max velocity!" << std::endl;
+      vlim = vmax;
+    } else {  // 不存在匀速运动的过程
+//      std::cout << "Desire max velocity is not reached!" << std::endl;
+      Tv_ = 0;
+      Tj1_ = amax / jmax;
+      Tj2_ = amax / jmax;
+      delta = pow(amax, 4) / pow(jmax, 2) + 2 * (pow(v0_tmp, 2) + pow(v1, 2)) + amax * (4 * (q1 - q0) - 2 * amax / jmax * (v0_tmp + v1));
+      Ta_ = (pow(amax, 2) / jmax - 2 * v0_tmp + sqrt(delta)) / (2 * amax);
+      Td_ = (pow(amax, 2) / jmax - 2 * v1 + sqrt(delta)) / (2 * amax);
+      vlim = v0_tmp + (Ta_ - Tj1_) * alima;
+      int count = 0;
+
+//      ::std::cout << BLUE << "Before while loop" << RESET << ::std::endl;
+      while (Ta_ < 2 * Tj1_ || Td_ < 2 * Tj2_) {
+        count++;
+        amax_r = amax_r - amax * 0.01;
+        if (amax_r < 0) return false;
+        alima = amax_r;
+        alimd = amax_r;
+        if (alima > 0) {
+          delta = pow(amax_r, 4) / pow(jmax, 2) + 2 * (pow(v0_tmp, 2) + pow(v1, 2)) + amax_r * (4 * (q1 - q0) - 2 * amax_r / jmax * (v0_tmp + v1));
+        } else {
+          delta = pow(amax_r, 4) / pow(jmax, 2) + 2 * (pow(v0_tmp, 2) + pow(v1, 2)) - amax_r * (4 * (q1 - q0) - 2 * amax_r / jmax * (v0_tmp + v1));
+        }
+        Tj1_ = amax_r / jmax;
+        Ta_ = (pow(amax_r, 2) / jmax - 2 * v0_tmp + sqrt(delta)) / (2 * amax_r);
+        Tj2_ = amax_r / jmax;
+        Td_ = (pow(amax_r, 2) / jmax - 2 * v1 + sqrt(delta)) / (2 * amax_r);
+        vlim = v0_tmp + (Ta_ - Tj1_) * alima;
+        vlima = vlim;
+        vlimb = v1 - (Td_ - Tj2_) * alimd;
+      }
+//      ::std::cout << BLUE << "After while loop" << RESET << ::std::endl;
+//      ::std::cout << "Ta_ = " << Ta_ << ", Td_ = " << Td_ << ", Tv_ = " << Tv_ << std::endl;
+
+      if (Ta_ < 0 || Td_ < 0) {
+        if (v0_tmp > v1) {
+          // 这里只需要一个减速段即可
+          Ta_ = 0;
+          Tj1_ = 0;
+          alima = 0;
+          Td_ = 2 * (q1 - q0) / (v1 + v0_tmp);
+          if ((v1 + v0_tmp) == 0) { return false; }
+          double temp3 = jmax * (jmax * pow((q1 - q0), 2) + pow(v0_tmp + v1, 2) * (v1 - v0_tmp));
+          if (temp3 < 0) { return false; }
+          Tj2_ = (jmax * (q1 - q0) - sqrt(jmax * (jmax * pow((q1 - q0), 2) + pow(v0_tmp + v1, 2) * (v1 - v0_tmp)))) / jmax / (v1 + v0_tmp);
+          alimd = -jmax * Tj2_;
+          vlim = v1 - (Td_ - Tj2_) * alimd;
+          alimd = -alimd;
+        } else {
+          Td_ = 0;
+          Tj2_ = 0;
+          Ta_ = 2 * (q1 - q0) / (v1 + v0_tmp);
+          if ((v1 + v0_tmp) == 0) { return false; }
+          Tj1_ = (jmax * (q1 - q0) - sqrt(jmax * (jmax * pow((q1 - q0), 2) - pow((v1 + v0_tmp), 2) * (v1 - v0_tmp)))) / jmax / (v1 + v0_tmp);
+          alima = jmax * Tj1_;
+          vlim = v0_tmp + (Ta_ - Tj1_) * alima;
+        }
+      }
+#ifdef DEBUG
+      std::cout << "vlim = " << vlim << std::endl;
+      std::cout << "alima = " << alima << std::endl;
+      std::cout << "alimd = " << alimd << std::endl;
+#endif
+    }
+
+    time_ = Ta_ + Td_ + Tv_;
+//    ::std::cout << "time_ = " << time_ << ", Ta_ = " << Ta_ << ", Td_ = " << Td_ << ", Tv_ = " << Tv_ << std::endl;
+    jm_ = jmax;
+    dm_ = alimd;
+    am_ = alima;
+    vm_ = vlim;
+    return true;
+  }
+
+  /**
+   * @brief : Calculate the jerk
+   * @param t : Current time_
+   * @return : Current Jerk
+   */
+  T j(const Real& t) {
+    if (t < 0) {
+      return 0;
+    } else if (t < Tj1_) {                // case 1: 加速度上升
+      return jm_ * delta_;
+    } else if (t < Ta_ - Tj1_) {          // case 2: 加速度匀速
+      return 0;
+    } else if (t < Ta_) {                 // case 3: 加速度减小
+      return -jm_ * delta_;
+    } else if (t < Ta_ + Tv_) {           // case 4: 加速度为0
+      return 0;
+    } else if (t < time_ - Td_ + Tj2_) {  // case 5: 减速度增大
+      return -jm_ * delta_;
+    } else if (t < time_ - Tj2_) {        // case 6: 减速度匀速
+      return 0;
+    } else if (t < time_) {               // case 7: 减速度减小
+      return jm_ * delta_;
+    } else {                              // case 8: 超过规划时间的情况
+      return 0;
+    }
+  }
+
+  /**
+   * @brief : Calculate the total time_
+   * @return
+   */
+  T t() const {
+    return Ta_ + Tv_ + Td_;
+  }
+
+  /**
+   * @brief : Calculate the velocity
+   * @param t : Current time_
+   * @return : Current Velocity
+   */
+  T v(const Real& t) const {  // time_ 赋值处理
+    T v0 = delta_ * v0_;
+    T ve = delta_ * ve_;
+    if (t < 0) {
+      return delta_ * v0;
+    } else if (t < Tj1_) {  // case 1: 加速度上升
+      return delta_ * (v0 + jm_ * pow(t, 2) / 2);
+    } else if (t < Ta_ - Tj1_) {  // case 2: 加速度匀速
+      return delta_ * (v0 + am_ * (t - Tj1_ / 2));
+    } else if (t < Ta_) {  // case 3: 加速度减小
+      return delta_ * (vm_ - jm_ * pow(Ta_ - t, 2) / 2);
+    } else if (t < Ta_ + Tv_) {  // case 4: 加速度为0
+      return delta_ * vm_;
+    } else if (t < time_ - Td_ + Tj2_) {  // case 5: 减速度增大
+      return delta_ * (vm_ - jm_ * pow(t - time_ + Td_, 2) / 2);
+    } else if (t < time_ - Tj2_) {  // case 6: 减速度匀速
+      return delta_ * (vm_ - dm_ * (t - time_ + Td_ - Tj2_ / 2));
+    } else if (t < time_) {  // case 7: 减速度减小
+      return delta_ * (ve + jm_ * pow(time_ - t, 2) / 2);
+    } else {  // case 8: 超过规划时间的情况
+      return delta_ * ve;
+    }
+  }
+
+  /**
+   * @brief : Calculate the position
+   * @param t : Current time_
+   * @return : position
+   */
+  T x(const Real& t) const {
+    T x0 = delta_ * x0_;
+    T xe = delta_ * xe_;
+    T v0 = delta_ * v0_;
+    T ve = delta_ * ve_;
+    if (t < 0) {
+      return delta_ * x0;
+    } else if (t < Tj1_) {  // case 1: 加速度上升
+      return delta_ * (x0 + v0 * t + jm_ * pow(t, 3) / 6);
+    } else if (t < Ta_ - Tj1_) {  // case 2: 加速度匀速
+      return delta_ * (x0 + v0 * t + am_ / 6 * (3 * pow(t, 2) - 3 * Tj1_ * t + pow(Tj1_, 2)));
+    } else if (t < Ta_) {  // case 3: 加速度减小
+      return delta_ * (x0 + (vm_ + v0) * Ta_ / 2 - vm_ * (Ta_ - t) + jm_ * pow((Ta_ - t), 3) / 6);
+    } else if (t < Ta_ + Tv_) {  // case 4: 加速度为0
+      return delta_ * (x0 + (vm_ + v0) * Ta_ / 2 + vm_ * (t - Ta_));
+    } else if (t < time_ - Td_ + Tj2_) {  // case 5: 减速度增大
+      return delta_ * (xe - (vm_ + ve) * Td_ / 2 + vm_ * (t - time_ + Td_) - jm_ * pow((t - time_ + Td_), 3) / 6);
+    } else if (t < time_ - Tj2_) {  // case 6: 减速度匀速
+      return delta_ * (xe - (vm_ + ve) * Td_ / 2 + vm_ * (t - time_ + Td_) - dm_ / 6 * (3 * pow((t - time_ + Td_), 2) - 3 * Tj2_ * (t - time_ + Td_) + pow(Tj2_, 2)));
+    } else if (t < time_) {  // case 7: 减速度减小
+      return delta_ * (xe - ve * (time_ - t) - jm_ * pow((time_ - t), 3) / 6);
+    } else {  // case 8: 超过规划时间的情况
+      return delta_ * xe;
+    }
+  }
+  T am_;  // Max acceleration
+  T dm_;  // Max deceleration
+  T jm_;
+  T v0_;    // Initial velocity
+  T ve_;    // End velocity
+  T vm_;    // Max velocity
+  T x0_;    // Initial position
+  T xe_;    // End position
+  T time_;  // Total time_
+
+ protected:
+ private:
+  T ah_;  //
+  T dh_;
+  Real Tj1_;
+  Real Tj2_;
+  Real Ta_;
+  Real Tv_;
+  Real Td_;
+  T delta_;
+};
+}  // namespace math
+}  // namespace ul
+#endif  // UL_SRC_UL_MATH_SSHAPEVELOCITY_H_

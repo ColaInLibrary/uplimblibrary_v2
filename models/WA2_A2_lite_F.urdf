@@ -1,0 +1,1535 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="WA2">
+  <link
+    name="Base">
+    <inertial>
+      <origin
+        xyz="-0.123936996639692 -0.00257875224226881 -0.141058351313398"
+        rpy="0 0 0" />
+      <mass
+        value="107.634913" />
+      <inertia
+        ixx="2.993031"
+        ixy="0.081615"
+        ixz="0.247870"
+        iyy="4.490877"
+        iyz="0.040497"
+        izz="4.207972" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Base.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Base.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="Ankle">
+    <inertial>
+      <origin
+        xyz="-4.93342037380384E-06 0.0021557562081101 0.0960336427166238"
+        rpy="0 0 0" />
+      <mass
+        value="2.981581" />
+      <inertia
+        ixx="0.060446"
+        ixy="-0.000004"
+        ixz="0.000000"
+        iyy="0.039701"
+        iyz="-0.000982"
+        izz="0.031610" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Ankle.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Ankle.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Pitch_Y_B"
+    type="revolute">
+    <origin
+      xyz="0 0 0.084"
+      rpy="0 0 0" />
+    <parent
+      link="Base" />
+    <child
+      link="Ankle" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.047"
+      upper="1.047"
+      effort="460"
+      velocity="3.6233" />
+  </joint>
+  <link
+    name="Knee">
+    <inertial>
+      <origin
+        xyz="0.00055987607604957 0.00935520817784873 0.0572952116294034"
+        rpy="0 0 0" />
+      <mass
+        value="12.622374" />
+      <inertia
+        ixx="0.105957"
+        ixy="-0.000047"
+        ixz="0.000244"
+        iyy="0.099862"
+        iyz="-0.006685"
+        izz="0.036969" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Knee.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Knee.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Pitch_Y_M"
+    type="revolute">
+    <origin
+      xyz="0 0 0.25"
+      rpy="0 0 0" />
+    <parent
+      link="Ankle" />
+    <child
+      link="Knee" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.443"
+      upper="2.443"
+      effort="460"
+      velocity="3.6233" />
+  </joint>
+  <link
+    name="Waist_Yaw">
+    <inertial>
+      <origin
+        xyz="-0.000339186847418543 -0.00631554084767967 0.0800784299260763"
+        rpy="0 0 0" />
+      <mass
+        value="5.553605" />
+      <inertia
+        ixx="0.017585"
+        ixy="0.000020"
+        ixz="-0.000005"
+        iyy="0.013016"
+        iyz="-0.000060"
+        izz="0.016523" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Waist_Yaw.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.890196078431372 0.890196078431372 0.913725490196078 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Waist_Yaw.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Waist_Z"
+    type="revolute">
+    <origin
+      xyz="0.00042428 1.8713E-05 0.21"
+      rpy="0 0 0" />
+    <parent
+      link="Knee" />
+    <child
+      link="Waist_Yaw" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.094"
+      upper="3.228"
+      effort="290"
+      velocity="2.618" />
+  </joint>
+  <link
+    name="Waist_Pitch">
+    <inertial>
+      <origin
+        xyz="0.000542178826589801 -0.000482663871114197 0.195311166967312"
+        rpy="0 0 0" />
+      <mass
+        value="8.079982" />
+      <inertia
+        ixx="0.145799"
+        ixy="0.000013"
+        ixz="0.001827"
+        iyy="0.114332"
+        iyz="0.000804"
+        izz="0.069157" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Waist_Pitch.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.890196078431372 0.890196078431372 0.913725490196078 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/Waist_Pitch.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Waist_Y"
+    type="revolute">
+    <origin
+      xyz="-0.00042428 -1.8713E-05 0.09"
+      rpy="0 0 0" />
+    <parent
+      link="Waist_Yaw" />
+    <child
+      link="Waist_Pitch" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-0.959"
+      upper="0.959"
+      effort="290"
+      velocity="2.618" />
+  </joint>
+  <link
+    name="SHOULDER_REVOLUTE_L">
+    <inertial>
+      <origin
+        xyz="-3.70297730357128E-05 0.0256962942992055 0.0498152643829894"
+        rpy="0 0 0" />
+      <mass
+        value="0.998526" />
+      <inertia
+        ixx="0.001058"
+        ixy="-0.000001"
+        ixz="-0.000001"
+        iyy="0.000731"
+        iyz="0.000057"
+        izz="0.001022" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_REVOLUTE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_REVOLUTE_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Z_L"
+    type="revolute">
+    <origin
+      xyz="0.005 0.075 0.2535"
+      rpy="0 0 0" />
+    <parent
+      link="Waist_Pitch" />
+    <child
+      link="SHOULDER_REVOLUTE_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.349"
+      upper="0.349"
+      effort="83"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="SCAPULA_L">
+    <inertial>
+      <origin
+        xyz="-0.000402152576580411 0.0700564079833955 -9.26964692971044E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.118706" />
+      <inertia
+        ixx="0.001112"
+        ixy="-0.000005"
+        ixz="0.000001"
+        iyy="0.001192"
+        iyz="0.000006"
+        izz="0.001356" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SCAPULA_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.341176470588235 1 0.768627450980392 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SCAPULA_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0.05 0.052"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_REVOLUTE_L" />
+    <child
+      link="SCAPULA_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-3.316"
+      upper="1.221"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="SHOULDER_L">
+    <inertial>
+      <origin
+        xyz="0.0216446680255281 0.00138844839247643 -0.0364113006457505"
+        rpy="0 0 0" />
+      <mass
+        value="0.241176" />
+      <inertia
+        ixx="0.000363"
+        ixy="-0.000012"
+        ixz="0.000124"
+        iyy="0.000444"
+        iyz="-0.000013"
+        izz="0.000366" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_X_L"
+    type="revolute">
+    <origin
+      xyz="0 0.075002 0"
+      rpy="0 0 0" />
+    <parent
+      link="SCAPULA_L" />
+    <child
+      link="SHOULDER_L" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-0.008"
+      upper="3.141"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="UPPERARM_L">
+    <inertial>
+      <origin
+        xyz="-0.000507904464661785 0.000195793437552799 -0.0734525264993936"
+        rpy="0 0 0" />
+      <mass
+        value="1.702243" />
+      <inertia
+        ixx="0.016576"
+        ixy="0.000000"
+        ixz="0.000102"
+        iyy="0.016519"
+        iyz="-0.000047"
+        izz="0.001127" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/UPPERARM_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.0431372549019608 1 0.909803921568627 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/UPPERARM_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Elbow_Z_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0845"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_L" />
+    <child
+      link="UPPERARM_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.94"
+      upper="2.94"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="FOREARM_L">
+    <inertial>
+      <origin
+        xyz="-0.00294104121885355 -0.00206447177131983 -0.0303480522054732"
+        rpy="0 0 0" />
+      <mass
+        value="0.209946433755709" />
+      <inertia
+        ixx="0.000350"
+        ixy="0.000001"
+        ixz="0.000001"
+        iyy="0.000226"
+        iyz="0.000010"
+        izz="0.000309" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/FOREARM_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/FOREARM_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Elbow_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1555"
+      rpy="0 0 0" />
+    <parent
+      link="UPPERARM_L" />
+    <child
+      link="FOREARM_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.094"
+      upper="0.087"
+      effort="31"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="WRIST_REVOLUTE_L">
+    <inertial>
+      <origin
+        xyz="5.77262974839898E-05 0.00171660282410474 -0.0687777329410186"
+        rpy="0 0 0" />
+      <mass
+        value="1.45500537624018" />
+      <inertia
+        ixx="0.004270"
+        ixy="0.000000"
+        ixz="-0.000006"
+        iyy="0.004278"
+        iyz="-0.000142"
+        izz="0.000966" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_REVOLUTE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_REVOLUTE_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Z_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0685"
+      rpy="0 0 0" />
+    <parent
+      link="FOREARM_L" />
+    <child
+      link="WRIST_REVOLUTE_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.967"
+      upper="2.967"
+      effort="25"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="WRIST_UPDOWN_L">
+    <inertial>
+      <origin
+        xyz="0.00354543842304378 0.000673596014475669 -0.0536750021419088"
+        rpy="0 0 0" />
+      <mass
+        value="0.486909830950932" />
+      <inertia
+        ixx="0.000422"
+        ixy="-0.000001"
+        ixz="-0.000015"
+        iyy="0.000377"
+        iyz="0.000017"
+        izz="0.000250" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_UPDOWN_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_UPDOWN_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1385"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_REVOLUTE_L" />
+    <child
+      link="WRIST_UPDOWN_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="16"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="WRIST_FLANGE_L">
+    <inertial>
+      <origin
+        xyz="0.0152718591002901 -4.15417925904993E-05 -0.0235330819311186"
+        rpy="0 0 0" />
+      <mass
+        value="0.0649534557019999" />
+      <inertia
+        ixx="0.000045"
+        ixy="0.000000"
+        ixz="0.000018"
+        iyy="0.000059"
+        iyz="0.000000"
+        izz="0.000045" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_FLANGE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_FLANGE_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_X_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.063"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_UPDOWN_L" />
+    <child
+      link="WRIST_FLANGE_L" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="16"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="TCP_L">
+    <inertial>
+      <origin
+        xyz="-1.170317703858E-09 -4.07996164630831E-10 0.000948540191039127"
+        rpy="0 0 0" />
+      <mass
+        value="0.030" />
+      <inertia
+        ixx="0.000002"
+        ixy="0.000000"
+        ixz="0.000000"
+        iyy="0.000002"
+        iyz="0.000000"
+        izz="0.000003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/TCP_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.247058823529412 0.392156862745098 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/TCP_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Tcp_L"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.060997"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_FLANGE_L" />
+    <child
+      link="TCP_L" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="HAND_L">
+    <inertial>
+      <origin
+        xyz="-0.00815393280012797 0.000980219007220645 0.0699753839304952"
+        rpy="0 0 0" />
+      <mass
+        value="0.598859549934234" />
+      <inertia
+        ixx="0.004189"
+        ixy="0.000053"
+        ixz="-0.000309"
+        iyy="0.004742"
+        iyz="0.000075"
+        izz="0.000749" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/HAND_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/HAND_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Hand_L"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="3.1416 0 -3.1416" />
+    <parent
+      link="TCP_L" />
+    <child
+      link="HAND_L" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="SHOULDER_REVOLUTE_R">
+    <inertial>
+      <origin
+        xyz="-3.70493685721007E-05 -0.0256961986034688 0.049815115916497"
+        rpy="0 0 0" />
+      <mass
+        value="0.998524545504679" />
+      <inertia
+        ixx="0.001058"
+        ixy="0.000001"
+        ixz="-0.000001"
+        iyy="0.000731"
+        iyz="-0.000057"
+        izz="0.001022" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_REVOLUTE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_REVOLUTE_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Z_R"
+    type="revolute">
+    <origin
+      xyz="0.005 -0.075 0.2535"
+      rpy="0 0 0" />
+    <parent
+      link="Waist_Pitch" />
+    <child
+      link="SHOULDER_REVOLUTE_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.349"
+      upper="0.349"
+      effort="83"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="SCAPULA_R">
+    <inertial>
+      <origin
+        xyz="-0.000402145392599029 -0.0700562759925994 -9.26382380471713E-05"
+        rpy="0 0 0" />
+      <mass
+        value="1.1186950990163" />
+      <inertia
+        ixx="0.001112"
+        ixy="0.000005"
+        ixz="0.000001"
+        iyy="0.001192"
+        iyz="-0.000006"
+        izz="0.001356" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SCAPULA_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.341176470588235 1 0.768627450980392 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SCAPULA_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 -0.05 0.052"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_REVOLUTE_R" />
+    <child
+      link="SCAPULA_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-3.316"
+      upper="1.221"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="SHOULDER_R">
+    <inertial>
+      <origin
+        xyz="0.0216420459987625 -0.00137925029748268 -0.0364174369801459"
+        rpy="0 0 0" />
+      <mass
+        value="0.241058319669438" />
+      <inertia
+        ixx="0.000363"
+        ixy="0.000012"
+        ixz="0.000124"
+        iyy="0.000444"
+        iyz="0.000013"
+        izz="0.000365" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/SHOULDER_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_X_R"
+    type="revolute">
+    <origin
+      xyz="0 -0.075002 0"
+      rpy="0 0 0" />
+    <parent
+      link="SCAPULA_R" />
+    <child
+      link="SHOULDER_R" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-3.141"
+      upper="0.008"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="UPPERARM_R">
+    <inertial>
+      <origin
+        xyz="-0.000506975305611168 -0.000197784818553565 -0.0735210765924704"
+        rpy="0 0 0" />
+      <mass
+        value="1.702218" />
+      <inertia
+        ixx="0.007349"
+        ixy="0.000000"
+        ixz="0.000032"
+        iyy="0.007292"
+        iyz="0.000023"
+        izz="0.001127" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/UPPERARM_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/UPPERARM_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Elbow_Z_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0845"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_R" />
+    <child
+      link="UPPERARM_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.94"
+      upper="2.94"
+      effort="57"
+      velocity="3.56" />
+  </joint>
+  <link
+    name="FOREARM_R">
+    <inertial>
+      <origin
+        xyz="-0.00302250655756731 0.00211363461842071 -0.0303482021498648"
+        rpy="0 0 0" />
+      <mass
+        value="0.210667582427769" />
+      <inertia
+        ixx="0.000350"
+        ixy="-0.000001"
+        ixz="0.000001"
+        iyy="0.000227"
+        iyz="-0.000010"
+        izz="0.000310" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/FOREARM_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/FOREARM_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Elbow_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1555"
+      rpy="0 0 0" />
+    <parent
+      link="UPPERARM_R" />
+    <child
+      link="FOREARM_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.094"
+      upper="0.087"
+      effort="31"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="WRIST_REVOLUTE_R">
+    <inertial>
+      <origin
+        xyz="5.77596821245974E-05 -0.00171660406942362 -0.068777712043552"
+        rpy="0 0 0" />
+      <mass
+        value="1.45498306245886" />
+      <inertia
+        ixx="0.004270"
+        ixy="0.000000"
+        ixz="-0.000006"
+        iyy="0.004278"
+        iyz="0.000142"
+        izz="0.000966" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_REVOLUTE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_REVOLUTE_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Z_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.0685"
+      rpy="0 0 0" />
+    <parent
+      link="FOREARM_R" />
+    <child
+      link="WRIST_REVOLUTE_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.967"
+      upper="2.967"
+      effort="25"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="WRIST_UPDOWN_R">
+    <inertial>
+      <origin
+        xyz="0.00358039765134741 -0.000546466094514586 -0.0539830076212918"
+        rpy="0 0 0" />
+      <mass
+        value="0.484520513177069" />
+      <inertia
+        ixx="0.000411"
+        ixy="0.000001"
+        ixz="-0.000014"
+        iyy="0.000367"
+        iyz="-0.000013"
+        izz="0.000248" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_UPDOWN_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_UPDOWN_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1385"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_REVOLUTE_R" />
+    <child
+      link="WRIST_UPDOWN_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="16"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="WRIST_FLANGE_R">
+    <inertial>
+      <origin
+        xyz="0.0152777977587203 3.30934793399684E-05 -0.0235242098323383"
+        rpy="0 0 0" />
+      <mass
+        value="0.0649820906111714" />
+      <inertia
+        ixx="0.000045"
+        ixy="0.000000"
+        ixz="0.000018"
+        iyy="0.000059"
+        iyz="0.000000"
+        izz="0.000045" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_FLANGE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/WRIST_FLANGE_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_X_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.063"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_UPDOWN_R" />
+    <child
+      link="WRIST_FLANGE_R" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="16"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="TCP_R">
+    <inertial>
+      <origin
+        xyz="-1.170317703858E-09 -4.07996053608528E-10 0.000948540191039127"
+        rpy="0 0 0" />
+      <mass
+        value="0.030" />
+      <inertia
+        ixx="0.000002"
+        ixy="0.000000"
+        ixz="0.000000"
+        iyy="0.000002"
+        iyz="0.000000"
+        izz="0.000003" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/TCP_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.247058823529412 0.392156862745098 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/TCP_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Tcp_R"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.060997"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_FLANGE_R" />
+    <child
+      link="TCP_R" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="HAND_R">
+    <inertial>
+      <origin
+        xyz="-0.00813577510574456 -0.000983419689847082 0.0699562639249667"
+        rpy="0 0 0" />
+      <mass
+        value="0.599187947982406" />
+      <inertia
+        ixx="0.001257"
+        ixy="-0.000058"
+        ixz="0.000032"
+        iyy="0.001771"
+        iyz="-0.000034"
+        izz="0.000709" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/HAND_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/HAND_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Hand_R"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="TCP_R" />
+    <child
+      link="HAND_R" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="NECK">
+    <inertial>
+      <origin
+        xyz="-0.000121156880643514 0.00011550493696498 0.038419491309523"
+        rpy="0 0 0" />
+      <mass
+        value="0.257410493838245" />
+      <inertia
+        ixx="0.000109"
+        ixy="-0.000001"
+        ixz="0.000001"
+        iyy="0.000087"
+        iyz="-0.000010"
+        izz="0.000089" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/NECK.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/NECK.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Neck_Z"
+    type="revolute">
+    <origin
+      xyz="0.001 0 0.4345"
+      rpy="0 0 0" />
+    <parent
+      link="Waist_Pitch" />
+    <child
+      link="NECK" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.785"
+      upper="0.785"
+      effort="7"
+      velocity="3.665" />
+  </joint>
+  <link
+    name="HEAD">
+    <inertial>
+      <origin
+        xyz="-0.00202886297963834 3.12765137845829E-05 -0.100345690284275"
+        rpy="0 0 0" />
+      <mass
+        value="1.56698351290445" />
+      <inertia
+        ixx="0.088882"
+        ixy="0.000026"
+        ixz="0.002032"
+        iyy="0.080831"
+        iyz="0.000037"
+        izz="0.014498" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/HEAD.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://WA2_A2_lite_F/meshes/HEAD.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Neck_Y"
+    type="revolute">
+    <origin
+      xyz="0 0 0.042"
+      rpy="0 0 0" />
+    <parent
+      link="NECK" />
+    <child
+      link="HEAD" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-0.174"
+      upper="0.349"
+      effort="7"
+      velocity="3.665" />
+  </joint>
+</robot>

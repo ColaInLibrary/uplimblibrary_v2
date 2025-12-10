@@ -1,0 +1,1192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-1-g15f4949  Build Version: 1.6.7594.29634
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="A3_Pro_dual_arm">
+  <link
+    name="Torso">
+    <inertial>
+      <origin
+        xyz="-0.00127083010964707 0.00421659096706385 0.121270654900152"
+        rpy="0 0 0" />
+      <mass
+        value="3.42554586536015" />
+      <inertia
+        ixx="0.00693805768644608"
+        ixy="2.36759423715983E-05"
+        ixz="-0.00034045934969529"
+        iyy="0.0110093842280699"
+        iyz="2.36219576252695E-05"
+        izz="0.00770866338024139" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/Torso.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/Torso.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="STERNUM-R">
+    <inertial>
+      <origin
+        xyz="-1.923934727272E-05 0.0252683999894033 -0.00221497177871841"
+        rpy="0 0 0" />
+      <mass
+        value="1.04925857979422" />
+      <inertia
+        ixx="0.00118301364760014"
+        ixy="1.09660399291756E-06"
+        ixz="-5.73846326374516E-07"
+        iyy="0.000725713313349293"
+        iyz="4.07309396534812E-05"
+        izz="0.00118714935075432" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/STERNUM-R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/STERNUM-R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Torso-Z-R"
+    type="revolute">
+    <origin
+      xyz="0.114 0.005 0.2405"
+      rpy="0 0 1.5708" />
+    <parent
+      link="Torso" />
+    <child
+      link="STERNUM-R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.34907"
+      upper="0.34907"
+      effort="83"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="SCAPULA_R">
+    <inertial>
+      <origin
+        xyz="0.00068587330751988 -0.0733054899578847 0.000171302728893485"
+        rpy="0 0 0" />
+      <mass
+        value="1.26184269763032" />
+      <inertia
+        ixx="0.00119346762213291"
+        ixy="2.74571557300334E-05"
+        ixz="1.14128528029667E-05"
+        iyy="0.00153027924408398"
+        iyz="-2.57297726816954E-06"
+        izz="0.00159743294670952" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SCAPULA_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SCAPULA_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="STERNUM-R" />
+    <child
+      link="SCAPULA_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-3.3161"
+      upper="1.2217"
+      effort="66"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="SHOULDER_R">
+    <inertial>
+      <origin
+        xyz="0.0049761032281675 -0.0105148625805702 -0.0303629425894672"
+        rpy="0 0 0" />
+      <mass
+        value="0.322980734067654" />
+      <inertia
+        ixx="0.000667817702483433"
+        ixy="-5.62595267807035E-05"
+        ixz="-0.000179601023415727"
+        iyy="0.000702959384812578"
+        iyz="-7.81286853711877E-05"
+        izz="0.000600917512492164" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SHOULDER_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SHOULDER_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_X_R"
+    type="revolute">
+    <origin
+      xyz="0 -0.076 0"
+      rpy="0 0 0" />
+    <parent
+      link="SCAPULA_R" />
+    <child
+      link="SHOULDER_R" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-3.1416"
+      upper="0.05236"
+      effort="66"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="UPPERARM_R">
+    <inertial>
+      <origin
+        xyz="-0.000350038668036659 1.91254796446383E-05 -0.093141336040728"
+        rpy="0 0 0" />
+      <mass
+        value="2.35072540802675" />
+      <inertia
+        ixx="0.00363319593016418"
+        ixy="1.16304657384769E-05"
+        ixz="-9.84554363223423E-06"
+        iyy="0.00339675775080664"
+        iyz="-2.69809540342325E-05"
+        izz="0.00214128969170702" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/UPPERARM_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/UPPERARM_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Z_R"
+    type="revolute">
+    <origin
+      xyz="0 -0.02 -0.0855"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_R" />
+    <child
+      link="UPPERARM_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.9671"
+      upper="2.9671"
+      effort="66"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="FOREARM_R">
+    <inertial>
+      <origin
+        xyz="-0.0116138576238645 -0.00709584712146166 -0.0239221520918893"
+        rpy="0 0 0" />
+      <mass
+        value="0.256655082484747" />
+      <inertia
+        ixx="0.000508290663663165"
+        ixy="1.36646004761062E-05"
+        ixz="-2.69028710787931E-05"
+        iyy="0.000486967413631816"
+        iyz="0.000135353037794593"
+        izz="0.000424697460370574" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/FOREARM_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/FOREARM_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Elbow_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1545"
+      rpy="0 0 0" />
+    <parent
+      link="UPPERARM_R" />
+    <child
+      link="FOREARM_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.2689"
+      upper="0.087266"
+      effort="57"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="WRIST_REVOLUTE_R">
+    <inertial>
+      <origin
+        xyz="-4.58815065276265E-06 -0.00172881543026249 -0.0720573277552295"
+        rpy="0 0 0" />
+      <mass
+        value="1.89687996990858" />
+      <inertia
+        ixx="0.00194778824377602"
+        ixy="-5.58867471864142E-07"
+        ixz="1.93110125798431E-06"
+        iyy="0.00195915708213946"
+        iyz="-2.54895756496948E-06"
+        izz="0.00149771279350457" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_REVOLUTE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_REVOLUTE_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Z_R"
+    type="revolute">
+    <origin
+      xyz="-0.015 0 -0.078501"
+      rpy="0 0 0" />
+    <parent
+      link="FOREARM_R" />
+    <child
+      link="WRIST_REVOLUTE_R" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.9671"
+      upper="2.9671"
+      effort="57"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="WRIST_UPDOWN_R">
+    <inertial>
+      <origin
+        xyz="0.0048463071075921 0.000704092054817085 -0.062257932166552"
+        rpy="0 0 0" />
+      <mass
+        value="0.629240142223126" />
+      <inertia
+        ixx="0.000452822674008242"
+        ixy="-1.44727773191494E-06"
+        ixz="7.47569002802957E-06"
+        iyy="0.00042849641272386"
+        iyz="5.92168938587083E-05"
+        izz="0.000340761699670252" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_UPDOWN_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_UPDOWN_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Y_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1585"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_REVOLUTE_R" />
+    <child
+      link="WRIST_UPDOWN_R" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="25"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="WRIST_FLANGE_R">
+    <inertial>
+      <origin
+        xyz="-0.00255436476831469 -4.39047861644504E-06 -0.0198489709666914"
+        rpy="0 0 0" />
+      <mass
+        value="0.119826357902856" />
+      <inertia
+        ixx="9.69898191753333E-05"
+        ixy="-6.47045447798397E-09"
+        ixz="-1.8994408355588E-05"
+        iyy="8.9500070311276E-05"
+        iyz="2.00869298167078E-08"
+        izz="6.69567597662772E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_FLANGE_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_FLANGE_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_X_R"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.073"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_UPDOWN_R" />
+    <child
+      link="WRIST_FLANGE_R" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="25"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="TCP_R">
+    <inertial>
+      <origin
+        xyz="2.41603065834033E-06 -4.08000716545232E-10 0.000948540191040514"
+        rpy="0 0 0" />
+      <mass
+        value="0.0233777557505185" />
+      <inertia
+        ixx="4.59613744167107E-06"
+        ixy="3.5427932867421E-14"
+        ixz="5.9280082157425E-15"
+        iyy="4.59612917066814E-06"
+        iyz="2.02682866354205E-15"
+        izz="8.2456492893093E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/TCP_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/TCP_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Tcp_R"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.063497"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_FLANGE_R" />
+    <child
+      link="TCP_R" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="Hand_R">
+    <inertial>
+      <origin
+        xyz="0.00813819582384469 -0.000983415338884464 -0.0699562751338956"
+        rpy="0 0 0" />
+      <mass
+        value="0.599187734685253" />
+      <inertia
+        ixx="0.00026032598094841"
+        ixy="-2.09893069273313E-06"
+        ixz="4.16282775865546E-05"
+        iyy="0.000456535608583653"
+        iyz="-8.88820736194536E-06"
+        izz="0.00024848599432589" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/Hand_R.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/Hand_R.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="RA_Hand"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="TCP_R" />
+    <child
+      link="Hand_R" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="STERNUM-L">
+    <inertial>
+      <origin
+        xyz="1.92392879151144E-05 0.0137315999526758 0.0497850282682974"
+        rpy="0 0 0" />
+      <mass
+        value="1.04925857930788" />
+      <inertia
+        ixx="0.00118301365184861"
+        ixy="1.09660363542464E-06"
+        ixz="5.73847063548696E-07"
+        iyy="0.000725713315464979"
+        iyz="-4.07309412565616E-05"
+        izz="0.00118714935131833" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/STERNUM-L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/STERNUM-L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Torso-Z-L"
+    type="revolute">
+    <origin
+      xyz="-0.075 0.005 0.1885"
+      rpy="0 0 1.5708" />
+    <parent
+      link="Torso" />
+    <child
+      link="STERNUM-L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.34907"
+      upper="0.34907"
+      effort="83"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="SCAPULA_L">
+    <inertial>
+      <origin
+        xyz="0.000689121952302366 0.0733036562324807 -0.000114340372104449"
+        rpy="0 0 0" />
+      <mass
+        value="1.26189802255293" />
+      <inertia
+        ixx="0.00119354036014948"
+        ixy="-2.74737787574911E-05"
+        ixz="-1.06355359208178E-05"
+        iyy="0.00153033243800766"
+        iyz="1.41634243051968E-06"
+        izz="0.0015974387708793" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SCAPULA_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SCAPULA_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0.039 0.052"
+      rpy="0 0 0" />
+    <parent
+      link="STERNUM-L" />
+    <child
+      link="SCAPULA_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-3.3161"
+      upper="1.2217"
+      effort="66"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="SHOULDER_L">
+    <inertial>
+      <origin
+        xyz="0.0049244201529139 0.0104864457955091 -0.03034267619003"
+        rpy="0 0 0" />
+      <mass
+        value="0.323155104621706" />
+      <inertia
+        ixx="0.000668478390413446"
+        ixy="5.63874053674599E-05"
+        ixz="-0.000179548504622748"
+        iyy="0.000702983857189676"
+        iyz="7.81967205076098E-05"
+        izz="0.000601308836467345" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SHOULDER_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/SHOULDER_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_X_L"
+    type="revolute">
+    <origin
+      xyz="0 0.076 0"
+      rpy="0 0 0" />
+    <parent
+      link="SCAPULA_L" />
+    <child
+      link="SHOULDER_L" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-0.05236"
+      upper="3.1416"
+      effort="66"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="UPPERARM_L">
+    <inertial>
+      <origin
+        xyz="-0.000206179779918736 0.000168841054578123 -0.0931414917734715"
+        rpy="0 0 0" />
+      <mass
+        value="2.35098721505077" />
+      <inertia
+        ixx="0.00363358030766872"
+        ixy="9.39617275356292E-06"
+        ixz="-1.11742381180102E-05"
+        iyy="0.00339730487296813"
+        iyz="5.00069805767278E-05"
+        izz="0.00214154912026128" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/UPPERARM_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/UPPERARM_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Shoulder_Z_L"
+    type="revolute">
+    <origin
+      xyz="0 0.02 -0.0855"
+      rpy="0 0 0" />
+    <parent
+      link="SHOULDER_L" />
+    <child
+      link="UPPERARM_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.9671"
+      upper="2.9671"
+      effort="66"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="FOREARM_L">
+    <inertial>
+      <origin
+        xyz="-0.0116191071348633 0.00709963779442574 -0.0239244889246086"
+        rpy="0 0 0" />
+      <mass
+        value="0.256681447078219" />
+      <inertia
+        ixx="0.000508804690468595"
+        ixy="-1.36192805147786E-05"
+        ixz="-2.69148820593435E-05"
+        iyy="0.000486941575915542"
+        iyz="-0.000135394560302101"
+        izz="0.000425046120836091" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/FOREARM_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/FOREARM_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Elbow_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1545"
+      rpy="0 0 0" />
+    <parent
+      link="UPPERARM_L" />
+    <child
+      link="FOREARM_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-2.2689"
+      upper="0.087266"
+      effort="57"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="WRIST_REVOLUTE_L">
+    <inertial>
+      <origin
+        xyz="-2.43609825974541E-05 0.0017309093236301 -0.0720577227402757"
+        rpy="0 0 0" />
+      <mass
+        value="1.8969024907929" />
+      <inertia
+        ixx="0.00194778098850722"
+        ixy="-5.68432238909113E-07"
+        ixz="-1.58517362166689E-07"
+        iyy="0.00195914747667991"
+        iyz="2.55672475096767E-06"
+        izz="0.00149768699428352" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_REVOLUTE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_REVOLUTE_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Z_L"
+    type="revolute">
+    <origin
+      xyz="-0.015 0 -0.078501"
+      rpy="0 0 0" />
+    <parent
+      link="FOREARM_L" />
+    <child
+      link="WRIST_REVOLUTE_L" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.9671"
+      upper="2.9671"
+      effort="57"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="WRIST_UPDOWN_L">
+    <inertial>
+      <origin
+        xyz="0.00483934601672558 -0.000706134133927339 -0.0622590400654398"
+        rpy="0 0 0" />
+      <mass
+        value="0.629190065792972" />
+      <inertia
+        ixx="0.00045275270285251"
+        ixy="1.43899243446738E-06"
+        ixz="7.61432678991087E-06"
+        iyy="0.000428418373809757"
+        iyz="-5.91960563740715E-05"
+        izz="0.000340744738955157" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_UPDOWN_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_UPDOWN_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_Y_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.1585"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_REVOLUTE_L" />
+    <child
+      link="WRIST_UPDOWN_L" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="25"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="WRIST_FLANGE_L">
+    <inertial>
+      <origin
+        xyz="-0.00255436518451421 -4.38981284964224E-06 -0.0198489706926705"
+        rpy="0 0 0" />
+      <mass
+        value="0.119826353781551" />
+      <inertia
+        ixx="9.69898174450143E-05"
+        ixy="-6.46979731459272E-09"
+        ixz="-1.8994408438954E-05"
+        iyy="8.9500069914214E-05"
+        iyz="2.00868894852365E-08"
+        izz="6.69567578017902E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_FLANGE_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/WRIST_FLANGE_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Wrist_X_L"
+    type="revolute">
+    <origin
+      xyz="0 0 -0.073"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_UPDOWN_L" />
+    <child
+      link="WRIST_FLANGE_L" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="25"
+      velocity="3.6652" />
+  </joint>
+  <link
+    name="TCP_L">
+    <inertial>
+      <origin
+        xyz="2.41603077435169E-06 -4.08013595132317E-10 0.000948540191040737"
+        rpy="0 0 0" />
+      <mass
+        value="0.0233777557505185" />
+      <inertia
+        ixx="4.59613744167107E-06"
+        ixy="3.54279301311846E-14"
+        ixz="5.9244593094569E-15"
+        iyy="4.59612917066815E-06"
+        iyz="2.02681852879067E-15"
+        izz="8.24564928930931E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/TCP_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/TCP_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Tcp_L"
+    type="fixed">
+    <origin
+      xyz="0 0 -0.063497"
+      rpy="0 0 0" />
+    <parent
+      link="WRIST_FLANGE_L" />
+    <child
+      link="TCP_L" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+  <link
+    name="Hand_L">
+    <inertial>
+      <origin
+        xyz="0.00815636834203261 0.000980211586155244 -0.0699753809581294"
+        rpy="0 0 0" />
+      <mass
+        value="0.598860778563434" />
+      <inertia
+        ixx="0.000260099456217965"
+        ixy="2.1535215262637E-06"
+        ixz="4.14173559888658E-05"
+        iyy="0.000456114952054717"
+        iyz="8.83884718170219E-06"
+        izz="0.0002482490599029" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/Hand_L.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://arm3urdf20250320/meshes/Hand_L.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="LA_Hand"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="TCP_L" />
+    <child
+      link="Hand_L" />
+    <axis
+      xyz="0 0 0" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="0"
+      velocity="0" />
+  </joint>
+</robot>

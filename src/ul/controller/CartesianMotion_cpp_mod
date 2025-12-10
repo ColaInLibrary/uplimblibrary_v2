@@ -1,0 +1,1406 @@
+/**
+ ******************************************************************************
+ * @Description   :
+ * @author        : AN Hao
+ * @Date          : 25-2-20
+ * @Version       : 0.0.1
+ * @File          : CartesianMotion.cpp
+ ******************************************************************************
+ */
+
+#include "CartesianMotion.h"
+
+namespace ul {
+namespace controller {
+CartesianMotion::CartesianMotion(::ul::hal::Coach& d, ::ul::mdl::Dynamic& r)
+    : driver(d),
+      robot(r),
+      dof(r.getDof()),
+      cartesian_trajectory_length_(4),
+      cartesian_ratio_(4),
+      cmd_q(r.getDof()),
+      cmd_qd(r.getDof()),
+      cmd_qdd(r.getDof()),
+      cmd_qddd(r.getDof()),
+      cmd_x(12),
+      cmd_xd(12),
+      cmd_xdd(12),
+      ik(2),
+      max_length(0),
+      moveL_data_(2),
+      moveL_last_position_(2),
+      moveL_last_quaternion_(2),
+      moveL_ssv_(4),       // 一条手臂位置、姿态各一个，两条手臂4个
+      moveL_path_(12, 0),  // 左右手末端总共12个维度
+      moveL_spline_(12),
+      nullspace_q_ref_(r.getDof()),
+      speedL_sv_(2, ::std::vector<::ul::math::SingleSShapeVelocity<::ul::math::Real>>(6)),
+      speedL_ratio_(2, ::std::vector<::ul::math::Real>(6)),
+      singular_qd(2),
+      isSingular(2, false) {
+  ::std::vector<::std::string> arm_type = {"LEFT", "RIGHT"};
+  ::std::vector<::std::string> mdh_base_names = {"SCAPULA_L", "SCAPULA_R"};
+  for (int j = 0; j < this->ik.size(); ++j) {
+    ::std::size_t ee_index = this->robot.getFrameId(mdh_base_names[j]);
+    ::ul::math::Transform T_world_mdh_base = this->robot.getOperationalTransform(ee_index);
+    this->ik[j].init(arm_type[j], T_world_mdh_base);
+  }
+  sys_servoL = ::std::make_unique<PID_MSD>(12, 480.0, 10.0, 8.0, 1.0, 8.0, 0.0, this->driver.getUpdateRate(), 201, 15);
+}
+
+CartesianMotion::~CartesianMotion() {}
+
+void CartesianMotion::setCartesianConfig(::ul::std17::CartesianConfig& c) { this->config = c; return; }
+
+void CartesianMotion::setChainIndex(::std::vector<::Eigen::VectorXi>& urdf_chain_idx_, ::std::vector<::Eigen::VectorXi>& alg_chain_idx_) { 
+  this->urdf_chain_idx_ = urdf_chain_idx_; 
+  this->alg_chain_idx_ = alg_chain_idx_;
+  return;
+}
+
+::std::vector<::ul::math::Vector6> CartesianMotion::getCommandCartesianAcceleration() { return this->cmd_xdd; }
+
+::std::vector<::ul::math::Vector6> CartesianMotion::getCommandCartesianPosition() { return this->cmd_x; }
+
+::std::vector<::ul::math::Vector6> CartesianMotion::getCommandCartesianVelocity() { return this->cmd_xd; }
+
+::ul::math::Vector CartesianMotion::getCommandJointAcceleration() { return this->cmd_qdd; }
+
+::ul::math::Vector CartesianMotion::getCommandJointPosition() { return this->cmd_q; }
+
+::ul::math::Vector CartesianMotion::getCommandJointVelocity() { return this->cmd_qd; }
+
+int CartesianMotion::getInverseKinematics(const ::std::vector<::ul::math::Vector6>& pose,
+                                           const ::std::vector<::ul::math::Real>& q7,
+                                           ::std::vector<::std::vector<Eigen::VectorXd>> &q,
+                                           ::std::vector<::std::vector<double>> &phi) { 
+  int result = 0;                                                                                
+  q.resize(2);
+  phi.resize(2);
+  ::std::vector<::ul::math::Transform> trans(2);
+  ::std::vector<::std::string> mdh_base_names = {"SCAPULA_L", "SCAPULA_R"};
+  ::ul::math::Vector q_temp = this->driver.getLastCommandJointPosition();
+  for (int j = 0; j < this->ik.size(); ++j) {
+    ::std::size_t ee_index = this->robot.getFrameId(mdh_base_names[j]);
+    ::ul::math::Transform T_world_mdh_base = this->robot.getWorldMdhBaseTransform(ee_index, q_temp);
+    this->ik[j].setT_world_mdh_base(T_world_mdh_base);
+    ::ul::math::Pose2Transformation(pose[j], trans[j]);
+    if (this->ik[j].getInverseKinematics(trans[j].matrix(), q7[j], q[j], phi[j])) {
+      result += (1 << j);
+    }
+  }
+  return result;
+}
+
+::std::vector<::ul::math::Vector> CartesianMotion::getSingularJointVelocity(){ return singular_qd; }
+
+int CartesianMotion::getTrajectoryLength() { return this->max_length; }
+
+bool CartesianMotion::moveLNullSpace(const ::std::vector<::ul::math::Vector6>& pose, const ::ul::math::Vector& ref_q, const double& speed, const double& acceleration) {
+  this->max_length = 0;
+
+  // Get Current Transform of the left and right TCP
+  ::std::vector<::ul::math::Transform> init_transform(2);
+  init_transform[0] = this->robot.getOperationalTransform(this->config.ee_name[0]);
+  init_transform[1] = this->robot.getOperationalTransform(this->config.ee_name[1]);
+
+  // Get Target Transform of the left and right TCP
+  ::std::vector<::ul::math::Transform> target_transform(2);
+  for (int i = 0; i < pose.size(); ++i) {
+    ::ul::math::Pose2Transformation(pose[i], target_transform[i]);
+  }
+
+  // 计算目标位置与当前位置的距离
+  ::std::vector<::ul::math::Real> distance(4);  // 0: left_distance, 1: right_distance, 2: left_angle, 3: right_angle
+  for (int i = 0; i < 2; ++i) {
+    distance[i] = (target_transform[i].translation() - init_transform[i].translation()).norm();
+  }
+
+  // 计算目标姿态与当前姿态的角度差
+  ::std::vector<::Eigen::AngleAxisd> error_angle_axis(2);
+  for (int j = 0; j < error_angle_axis.size(); ++j) {
+    ::ul::math::Matrix33 error_rotation = init_transform[j].rotation().transpose() * target_transform[j].rotation();
+    error_angle_axis[j] = ::Eigen::AngleAxisd(error_rotation);
+    distance[j + 2] = error_angle_axis[j].angle();  // distance[2]: left_angle, distance[3]: right_angle
+  }
+
+  // 将起止位姿齐次变换矩阵传递到规划数据结构中
+  for (int j = 0; j < 2; ++j) {
+    this->moveL_data_[j].first = init_transform[j];
+    this->moveL_data_[j].second = target_transform[j];
+  }
+
+  // 位姿预规划
+  for (int j = 0; j < distance.size(); ++j) {
+    this->moveL_ssv_[j].x0_ = 0.0;
+    this->moveL_ssv_[j].xe_ = distance[j];
+    this->moveL_ssv_[j].v0_ = 0.0;
+    this->moveL_ssv_[j].ve_ = 0.0;
+    this->moveL_ssv_[j].vm_ = speed;
+    this->moveL_ssv_[j].am_ = acceleration;
+    this->moveL_ssv_[j].jm_ = 30;
+    if (this->moveL_ssv_[j].interpolate()) {
+      this->cartesian_trajectory_length_[j] = ::std::ceil(this->moveL_ssv_[j].t() / this->driver.getUpdateRate());
+    } else {
+      this->cartesian_trajectory_length_[j] = 0;
+    }
+    //    ::std::cout << this->cartesian_trajectory_length_[j] << ::std::endl;
+  }
+
+  // 计算最长轨迹长度
+  for (int i = 0; i < distance.size(); ++i) {
+    if (this->cartesian_trajectory_length_[i] > this->max_length) {
+      this->max_length = this->cartesian_trajectory_length_[i];
+    }
+  }
+
+  if (0 == max_length) {
+    ::std::cout << YELLOW << "[WARN moveL] No trajectory generated!" << RESET << ::std::endl;
+    return false;
+  }
+
+  // 计算左右手臂位姿各维度规划参数的比例
+  for (int j = 0; j < distance.size(); ++j) {
+    this->cartesian_ratio_[j] = (double)this->cartesian_trajectory_length_[j] / max_length;
+  }
+
+  // 各维度同步重新规划
+  for (int j = 0; j < distance.size(); ++j) {
+    if (0 == this->cartesian_ratio_[j]) {
+      continue;
+    }
+    this->moveL_ssv_[j].vm_ *= ::std::pow(this->cartesian_ratio_[j], 1);
+    this->moveL_ssv_[j].am_ *= ::std::pow(this->cartesian_ratio_[j], 2);
+    this->moveL_ssv_[j].jm_ *= ::std::pow(this->cartesian_ratio_[j], 3);
+    if (this->moveL_ssv_[j].interpolate()) {
+      this->cartesian_trajectory_length_[j] = ::std::ceil(this->moveL_ssv_[j].t() / this->driver.getUpdateRate());
+    } else {
+      this->cartesian_trajectory_length_[j] = 0;
+    }
+    //    ::std::cout << YELLOW << "joint " << j << ": ratio: " << this->cartesian_ratio_[j] << ", time: " << this->moveL_ssv_[j].t() << RESET << ::std::endl;
+  }
+  this->cmd_q = this->driver.getLastCommandJointPosition();
+  this->cmd_qd = this->driver.getLastCommandJointVelocity();
+  this->cmd_qdd = this->driver.getLastCommandJointAcceleration();
+  this->nullspace_q_ref_ = ref_q;
+  return true;
+}
+
+bool CartesianMotion::moveL(const ::std::vector<::ul::math::Vector6>& pose, const double& speed, const double& acceleration) {
+  this->max_length = 0;
+  // Get Current Transform of the left and right TCP
+  this->robot.setPosition(this->driver.getLastCommandJointPosition());
+  
+  ::std::vector<::ul::math::Matrix> J(2), J_temp(2);
+  ::ul::math::Real damping = 0.05;
+  // int idx = 0;
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian()(Eigen::all, this->urdf_chain_idx_[i]);
+      int chain_dim = this->urdf_chain_idx_[i].size();
+      if (chain_dim < 6){
+        J[i].resize(chain_dim, chain_dim);
+        for (int j = 0; j < chain_dim; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);  // 选取的笛卡尔空间自由度，后续修改
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+      
+      if (!isSingular[i]) {
+        if (this->robot.isSingular(J[i], damping)) {
+          ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity()(alg_chain_idx_[i]);
+          ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+          if (max_abs > 0.01) {
+            singular_qd[i] = qd_temp/max_abs;
+          } else {
+            singular_qd[i].resize(chain_dim);
+            singular_qd[i].setZero();
+          }
+        } 
+      }
+      if (this->robot.isSingular(J[i], damping)) {
+        this->isSingular[i] = true;
+        ::std::cout << RED << "[Error moveL] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } else {
+        this->isSingular[i] = false;
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+      return false;
+    }
+  }
+  if (this->isSingular[0]&&this->isSingular[1]) {
+    return false;
+  }
+  ::std::vector<::ul::math::Transform> init_transform(2);
+  init_transform[0] = this->robot.getOperationalTransform(this->config.ee_name[0]);
+  init_transform[1] = this->robot.getOperationalTransform(this->config.ee_name[1]);
+
+  // Get Target Transform of the left and right TCP
+  ::std::vector<::ul::math::Transform> target_transform(2);
+  for (int i = 0; i < pose.size(); ++i) {
+    ::ul::math::Pose2Transformation(pose[i], target_transform[i]);
+  }
+  /******** 测试用的打印 ***********/
+  //    ::std::cout << "Left init Transform: \n" << init_transform[0].matrix() << ::std::endl;
+  //    ::std::cout << "Left target Transform: \n" << target_transform[0].matrix() << ::std::endl;
+  //    ::std::cout << "Right init Transform: \n" << init_transform[1].matrix() << ::std::endl;
+  //    ::std::cout << "Right target Transform: \n" << target_transform[1].matrix() << ::std::endl;
+
+  // 计算目标位置与当前位置的距离
+  ::std::vector<::ul::math::Real> distance(4);  // 0: left_distance, 1: right_distance, 2: left_angle, 3: right_angle
+  for (int i = 0; i < 2; ++i) {
+    distance[i] = (target_transform[i].translation() - init_transform[i].translation()).norm();
+  }
+
+  // 计算目标姿态与当前姿态的角度差
+  ::std::vector<::Eigen::AngleAxisd> error_angle_axis(2);
+  for (int j = 0; j < error_angle_axis.size(); ++j) {
+    ::ul::math::Matrix33 error_rotation = init_transform[j].rotation().transpose() * target_transform[j].rotation();
+    error_angle_axis[j] = ::Eigen::AngleAxisd(error_rotation);
+    distance[j + 2] = error_angle_axis[j].angle();  // distance[2]: left_angle, distance[3]: right_angle
+  }
+
+  /******** 测试用的打印 ***********/
+  //    ::std::cout << "Distance: " << ::std::endl;
+  //    for (int i = 0; i < distance.size(); ++i) {
+  //      ::std::cout << distance[i] << ::std::endl;
+  //    }
+
+  // 将起止位姿齐次变换矩阵传递到规划数据结构中
+  for (int j = 0; j < 2; ++j) {
+    this->moveL_data_[j].first = init_transform[j];
+    this->moveL_data_[j].second = target_transform[j];
+  }
+
+  // 位姿预规划
+  for (int j = 0; j < distance.size(); ++j) {
+    this->moveL_ssv_[j].x0_ = 0.0;
+    this->moveL_ssv_[j].xe_ = distance[j];
+    this->moveL_ssv_[j].v0_ = 0.0;
+    this->moveL_ssv_[j].ve_ = 0.0;
+    this->moveL_ssv_[j].vm_ = speed;
+    this->moveL_ssv_[j].am_ = acceleration;
+    this->moveL_ssv_[j].jm_ = 30;
+    if (this->moveL_ssv_[j].interpolate()) {
+      this->cartesian_trajectory_length_[j] = ::std::ceil(this->moveL_ssv_[j].t() / this->driver.getUpdateRate());
+    } else {
+      this->cartesian_trajectory_length_[j] = 0;
+    }
+  }
+
+  // 计算最长轨迹长度
+  for (int i = 0; i < distance.size(); ++i) {
+    if (this->cartesian_trajectory_length_[i] > this->max_length) {
+      this->max_length = this->cartesian_trajectory_length_[i];
+    }
+  }
+
+  if (0 == max_length) {
+    ::std::cout << YELLOW << "[WARN moveL] No trajectory generated!" << RESET << ::std::endl;
+    return false;
+  }
+
+  // 计算左右手臂位姿各维度规划参数的比例
+  for (int j = 0; j < distance.size(); ++j) {
+    this->cartesian_ratio_[j] = (double)this->cartesian_trajectory_length_[j] / max_length;
+  }
+
+  // 各维度同步重新规划
+  for (int j = 0; j < distance.size(); ++j) {
+    if (0 == this->cartesian_ratio_[j]) {
+      continue;
+    }
+    this->moveL_ssv_[j].vm_ *= ::std::pow(this->cartesian_ratio_[j], 1);
+    this->moveL_ssv_[j].am_ *= ::std::pow(this->cartesian_ratio_[j], 2);
+    this->moveL_ssv_[j].jm_ *= ::std::pow(this->cartesian_ratio_[j], 3);
+    if (this->moveL_ssv_[j].interpolate()) {
+      this->cartesian_trajectory_length_[j] = ::std::ceil(this->moveL_ssv_[j].t() / this->driver.getUpdateRate());
+    } else {
+      this->cartesian_trajectory_length_[j] = 0;
+    }
+    //    ::std::cout << YELLOW << "joint " << j << ": ratio: " << this->cartesian_ratio_[j] << ", time: " << this->moveL_ssv_[j].t() << RESET << ::std::endl;
+  }
+  this->cmd_q = this->driver.getLastCommandJointPosition();
+  this->cmd_qd = this->driver.getLastCommandJointVelocity();
+  this->cmd_qdd = this->driver.getLastCommandJointAcceleration();
+  return true;
+}
+
+bool CartesianMotion::moveL(const ::std::vector<::ul::math::Vector6>& init_pose, const ::std::vector<::std::vector<double>>& path, const double& time) {
+  // 输入的 path 格式：二维数组，第一个维度表示 path 点数，第二个维度表示左右臂位姿（12维）
+  assert(path.size() >= 2);
+  assert(time > 0.0);
+
+  this->max_length = 0;
+  this->robot.setPosition(this->driver.getLastCommandJointPosition());
+  ::std::vector<::ul::math::Matrix> J(2), J_temp(2);
+  ::ul::math::Real damping = 0.05;
+  int idx = 0;
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+      
+      if (!isSingular[i]) {
+        if (this->robot.isSingular(J[i], damping)) {
+          ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+          ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+          if (max_abs > 0.01) {
+            singular_qd[i] = qd_temp/max_abs;
+          } else {
+            singular_qd[i].resize(this->config.joint_num[i]);
+            singular_qd[i].setZero();
+          }
+        } 
+      }
+      if (this->robot.isSingular(J[i], damping)) {
+        this->isSingular[i] = true;
+        ::std::cout << RED << "[Error moveL_path] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } else {
+        this->isSingular[i] = false;
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+      return false;
+    }
+    idx += this->config.joint_num[i];
+  }
+  if (this->isSingular[0]&&this->isSingular[1]) {
+    return false;
+  }
+  // 对传入的 path 姿态进行预处理，左右手末端共 12 维
+  ::std::vector<::ul::math::Vector> path_deal(path.size() + 1, ::ul::math::Vector::Zero(12));
+  ::ul::math::Vector6 left_pose, right_pose;
+  ::ul::math::Transform left_transform, right_transform;
+  ::ul::math::Quaternion left_quaternion, right_quaternion;
+  for (int i = 0; i < path_deal.size(); ++i) {
+    if (i == 0) {
+      left_pose = init_pose[0];
+      right_pose = init_pose[1];
+    } else {
+      for (int j = 0; j < 6; ++j) {
+        left_pose[j] = path[i - 1][j];
+        right_pose[j] = path[i - 1][j + 6];
+      }
+    }
+    ::ul::math::Pose2Transformation(left_pose, left_transform);
+    ::ul::math::Pose2Transformation(right_pose, right_transform);
+    left_quaternion = ::ul::math::Quaternion(left_transform.rotation());
+    right_quaternion = ::ul::math::Quaternion(right_transform.rotation());
+    if (left_quaternion.w() < 0) left_quaternion.coeffs() *= -1;  // 调整四元数方向
+    if (right_quaternion.w() < 0) right_quaternion.coeffs() *= -1;  // 调整四元数方向
+
+    // if (i > 0) {
+    //   if (this->moveL_last_quaternion_[0].dot(left_quaternion) < 0.0) left_quaternion.coeffs() *= -1;
+    //   if (this->moveL_last_quaternion_[1].dot(right_quaternion) < 0.0) right_quaternion.coeffs() *= -1;
+    // }
+    
+    left_pose.segment<3>(3) = left_quaternion.log().vec();
+    right_pose.segment<3>(3) = right_quaternion.log().vec();
+    path_deal[i] << left_pose, right_pose;
+    if (i == 0) {
+      this->moveL_data_[0].first = left_transform;
+      this->moveL_data_[1].first = right_transform;
+    } else {
+      this->moveL_last_quaternion_[0] = left_quaternion;
+      this->moveL_last_quaternion_[1] = right_quaternion;
+    }
+  }
+
+  // 重置参数大小
+  ::std::vector<double> path_time(path.size() + 1, 0);  // 第一个点的时间为0，所以要多一个点
+  this->moveL_path_.resize(path.size() + 1);
+
+  // 对时间进行插值
+  for (int i = 0; i < path.size(); ++i) {
+    path_time[i + 1] = time * (i + 1) / path.size();
+  }
+  // 各维度进行样条插值
+  for (int j = 0; j < 12; ++j) {  // 左右手末端共12维
+    // 更新每个维度的初始插值数据，先左后右
+    for (int i = 0; i < path_deal.size(); ++i) {
+      this->moveL_path_[i] = path_deal[i][j];
+    }
+    // Boundary derivatives
+    ::ul::math::Real yd0 = 0.0;
+    ::ul::math::Real yd1 = 0.0;
+    ::ul::math::Spline<::ul::math::Real> sp = ::ul::math::Spline<::ul::math::Real>::CubicFirst(path_time, this->moveL_path_, yd0, yd1);
+    this->moveL_spline_[j] = sp;
+  }
+
+  this->max_length = ceil(time / this->driver.getUpdateRate());
+
+  this->cmd_q = this->driver.getLastCommandJointPosition();
+  this->cmd_qd = this->driver.getLastCommandJointVelocity();
+  this->cmd_qdd = this->driver.getLastCommandJointAcceleration();
+
+  return true;
+}
+
+bool CartesianMotion::moveL(const ::std::vector<::ul::math::Vector6>& init_pose, const ::std::vector<::std::vector<double>>& path, const ::std::vector<double>& time) {
+  // 输入的 path 格式：二维数组，第一个维度表示 path 点数，第二个维度表示左右臂位姿（12维）
+  assert(path.size() >= 2);                             // 第一个点由当前关节角确认
+  assert(path.size() == time.size());                   // 路径点长度与时刻长度一致
+  assert(time[0] > 0.0);                                // 传入的第一个时刻应大于0.0 
+  assert(std::adjacent_find(time.begin(), time.end(),[](double a, double b) {return a >= b;}) == time.end()); // 检查严格递增
+
+  this->max_length = 0;
+  this->robot.setPosition(this->driver.getLastCommandJointPosition());
+  ::std::vector<::ul::math::Matrix> J(2), J_temp(2);
+  ::ul::math::Real damping = 0.05;
+  int idx = 0;
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+      
+      if (!isSingular[i]) {
+        if (this->robot.isSingular(J[i], damping)) {
+          ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+          ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+          if (max_abs > 0.01) {
+            singular_qd[i] = qd_temp/max_abs;
+          } else {
+            singular_qd[i].resize(this->config.joint_num[i]);
+            singular_qd[i].setZero();
+          }
+        } 
+      }
+      if (this->robot.isSingular(J[i], damping)) {
+        this->isSingular[i] = true;
+        ::std::cout << RED << "[Error moveL_path] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } else {
+        this->isSingular[i] = false;
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+      return false;
+    }
+    idx += this->config.joint_num[i];
+  }
+  if (this->isSingular[0]&&this->isSingular[1]) {
+    return false;
+  }
+  // 对传入的 path 姿态进行预处理，左右手末端共 12 维
+  ::std::vector<::ul::math::Vector> path_deal(path.size() + 1, ::ul::math::Vector::Zero(12));
+  ::ul::math::Vector6 left_pose, right_pose;
+  ::ul::math::Transform left_transform, right_transform;
+  ::ul::math::Quaternion left_quaternion, right_quaternion;
+  for (int i = 0; i < path_deal.size(); ++i) {
+    if (i == 0) {
+      left_pose = init_pose[0];
+      right_pose = init_pose[1];
+    } else {
+      for (int j = 0; j < 6; ++j) {
+        left_pose[j] = path[i - 1][j];
+        right_pose[j] = path[i - 1][j + 6];
+      }
+    }
+    ::ul::math::Pose2Transformation(left_pose, left_transform);
+    ::ul::math::Pose2Transformation(right_pose, right_transform);
+    left_quaternion = ::ul::math::Quaternion(left_transform.rotation());
+    right_quaternion = ::ul::math::Quaternion(right_transform.rotation());
+    if (left_quaternion.w() < 0) left_quaternion.coeffs() *= -1;  // 调整四元数方向
+    if (right_quaternion.w() < 0) right_quaternion.coeffs() *= -1;  // 调整四元数方向
+    
+    left_pose.segment<3>(3) = left_quaternion.log().vec();
+    right_pose.segment<3>(3) = right_quaternion.log().vec();
+    path_deal[i] << left_pose, right_pose;
+    if (i == 0) {
+      this->moveL_data_[0].first = left_transform;
+      this->moveL_data_[1].first = right_transform;
+    } else {
+      this->moveL_last_quaternion_[0] = left_quaternion;
+      this->moveL_last_quaternion_[1] = right_quaternion;
+    }
+  }
+
+  // 重置参数大小
+  ::std::vector<double> path_time(path.size() + 1, 0);  // 第一个点的时间为0，所以要多一个点
+  this->moveL_path_.resize(path.size() + 1);
+
+  // 对时间进行插值
+  for (int i = 0; i < path.size(); ++i) {
+    path_time[i + 1] = time[i];
+  }
+  // 各维度进行样条插值
+  for (int j = 0; j < 12; ++j) {  // 左右手末端共12维
+    // 更新每个维度的初始插值数据，先左后右
+    for (int i = 0; i < path_deal.size(); ++i) {
+      this->moveL_path_[i] = path_deal[i][j];
+    }
+    // Boundary derivatives
+    ::ul::math::Real yd0 = 0.0;
+    ::ul::math::Real yd1 = 0.0;
+    ::ul::math::Spline<::ul::math::Real> sp = ::ul::math::Spline<::ul::math::Real>::CubicFirst(path_time, this->moveL_path_, yd0, yd1);
+    this->moveL_spline_[j] = sp;
+  }
+
+  this->max_length = ceil(time.back()/ this->driver.getUpdateRate());
+
+  this->cmd_q = this->driver.getLastCommandJointPosition();
+  this->cmd_qd = this->driver.getLastCommandJointVelocity();
+  this->cmd_qdd = this->driver.getLastCommandJointAcceleration();
+
+  return true;
+}
+
+::std::vector<::std::vector<::ul::math::Real>> CartesianMotion::moveNullSpace(const ::std::vector<::ul::math::Vector6> pose) {
+  ::std::vector<::std::vector<::ul::math::Real>> nullspace_q;
+  ::std::vector<::ul::math::Real> q7(2);
+  ::std::vector<::std::vector<Eigen::VectorXd>> q_ik(2), q_ik_valid(2);  // 第一个维度表示左右手，第二个维度表示有几组逆解
+  ::std::vector<::std::vector<::ul::math::Real>> arm_angle(2);
+  ::std::vector<::ul::math::Transform> T_ee_pose(2);
+  for (int j = 0; j < pose.size(); ++j) {
+    ::ul::math::Pose2Transformation(pose[j], T_ee_pose[j]);
+    ::std::cout << YELLOW << "pose " << j << ": " << pose[j].transpose() << RESET << ::std::endl;
+    ::std::cout << YELLOW << "T_ee_pose " << j << ": " << T_ee_pose[j].matrix() << RESET << ::std::endl;
+  }
+  ::ul::math::Vector cmd_q_last = this->driver.getLastCommandJointPosition();
+  q7[1] = -1.5;
+  while (q7[1] < 1.5) {
+    q_ik_valid[1].clear();
+    if(this->ik[1].getInverseKinematics(T_ee_pose[1].matrix(), q7[1], q_ik[1], arm_angle[1])) {
+      q_ik_valid[1] = this->ik[1].filterValidJointSolutions(q_ik[1]);
+    }
+    q7[1] += 0.01;
+    if (q_ik_valid[1].empty()) continue;
+    this->ik[1].sortSolutionsByDistance(q_ik_valid[1]);  // 挑选出离关节角范围最远的解
+    this->ik[1].sortSolutionsByDistance(q_ik_valid[1], cmd_q_last.head(7));  // 前7个是右手关节
+
+    ::std::vector<::ul::math::Real> temp(this->dof, 0);
+    for (int j = 0; j < this->dof; ++j) {
+      if (j < 7) {
+        temp[j] = q_ik_valid[1].back()[j];  // 最后一个元素，表示离当前关节角最近的解
+      } else {
+        temp[j] = cmd_q_last[j];
+      }
+    }
+    nullspace_q.push_back(temp);
+  }
+  return nullspace_q;
+}
+
+bool CartesianMotion::speedL(::std::vector<::ul::math::Vector6> init_xd, const ::std::vector<::ul::math::Vector6> &trg_xd, const double& acceleration, const double& time) {
+  assert(time > 0.0);
+  this->max_length = 0;
+  this->robot.setPosition(this->driver.getLastCommandJointPosition());
+  ::std::vector<::ul::math::Matrix> J(2), J_temp(2);
+  ::ul::math::Real damping = 0.05;
+  int idx = 0;
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+      
+      if (!isSingular[i]) {
+        if (this->robot.isSingular(J[i], damping)) {
+          ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+          ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+          if (max_abs > 0.01) {
+            singular_qd[i] = qd_temp/max_abs;
+          } else {
+            singular_qd[i].resize(this->config.joint_num[i]);
+            singular_qd[i].setZero();
+          }
+        } 
+      }
+      if (this->robot.isSingular(J[i], damping)) {
+        this->isSingular[i] = true;
+        ::std::cout << RED << "[Error speedL] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } else {
+        this->isSingular[i] = false;
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+      return false;
+    }
+    idx += this->config.joint_num[i];
+  }
+  if (this->isSingular[0]&&this->isSingular[1]) {
+    return false;
+  }
+  // 获取初始化末端速度
+  int cartesian_dim = this->speedL_sv_[0].size();  // 笛卡尔空间运动自由度是6
+  int arm_num = this->speedL_sv_.size();           // 手臂的数量是2
+
+  // set speedL_sv_ parameters and pre-planning
+  ::std::vector<::std::vector<::ul::math::Real>> trajectory_length(arm_num, ::std::vector<::ul::math::Real>(cartesian_dim));
+  for (int i = 0; i < arm_num; ++i) {
+    for (int j = 0; j < cartesian_dim; ++j) {
+      // this->speedL_sv_[i][j].v0_ = abs(init_xd[i][j]) <= 0.0008 ? 0.0 : init_xd[i][j];
+      this->speedL_sv_[i][j].v0_ = init_xd[i][j];
+      this->speedL_sv_[i][j].ve_ = trg_xd[i][j];
+      this->speedL_sv_[i][j].am_ = abs(acceleration);
+      this->speedL_sv_[i][j].jm_ = 30;
+      if (this->speedL_sv_[i][j].interpolate()) {
+        trajectory_length[i][j] = ::std::ceil(this->speedL_sv_[i][j].t()/this->driver.getUpdateRate());
+      } else {
+        trajectory_length[i][j] = 0;
+      }
+      if (trajectory_length[i][j] > this->max_length) {
+        this->max_length = trajectory_length[i][j];
+      }
+    }
+  }
+
+  if (0 == this->max_length) {
+    ::std::cout << YELLOW << "No trajectory generated!" << RESET << ::std::endl;
+    return false;
+  }
+
+  // 计算各关节规划参数的比例
+  for (int i = 0; i < arm_num; ++i) {
+    for (int j = 0; j < cartesian_dim; ++j) {
+      this->speedL_ratio_[i][j] = (double)trajectory_length[i][j]/max_length;
+    }
+  }
+
+  // 多轴同步重新规划
+  for (int i = 0; i < arm_num; ++i) {
+    for (int j = 0; j < cartesian_dim; ++j) {
+      if (0 == speedL_ratio_[i][j]) { continue; }
+      this->speedL_sv_[i][j].am_ = this->speedL_sv_[i][j].am_ * ::std::pow(this->speedL_ratio_[i][j], 1);
+      this->speedL_sv_[i][j].jm_ = this->speedL_sv_[i][j].jm_ * ::std::pow(this->speedL_ratio_[i][j], 2);
+      if (this->speedL_sv_[i][j].interpolate()) {
+        trajectory_length[i][j] = ::std::ceil(this->speedL_sv_[i][j].t()/this->driver.getUpdateRate());
+      } else {
+        trajectory_length[i][j] = 0;
+      }
+    }
+  }
+
+  this->cmd_q = this->driver.getLastCommandJointPosition();
+  this->cmd_qd = this->driver.getLastCommandJointVelocity();
+  this->cmd_qdd = this->driver.getLastCommandJointAcceleration();
+  return true;
+}
+
+bool CartesianMotion::servoL(const ::std::vector<::ul::math::Vector6>& init_x, const::std::vector<::ul::math::Vector6>& init_xd, const ::std::vector<::ul::math::Vector6>& pose, const ::ul::math::Real& speed, const ::ul::math::Real& acceleration, const ::ul::math::Real& time) {
+  assert(pose.size() == 2);
+  assert(time > 0.0);
+  this->max_length = 0;
+
+  this->robot.setPosition(this->driver.getLastCommandJointPosition());
+
+  ::std::vector<::ul::math::Matrix> J(2), J_temp(2);
+  ::ul::math::Real damping = 0.05;
+  int idx = 0;
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+      
+      if (!isSingular[i]) {
+        if (this->robot.isSingular(J[i], damping)) {
+          ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+          ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+          if (max_abs > 0.01) {
+            singular_qd[i] = qd_temp/max_abs;
+          } else {
+            singular_qd[i].resize(this->config.joint_num[i]);
+            singular_qd[i].setZero();
+          }
+        } 
+      }
+      if (this->robot.isSingular(J[i], damping)) {
+        this->isSingular[i] = true;
+        ::std::cout << RED << "[Error servoL] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } else {
+        this->isSingular[i] = false;
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+      return false;
+    }
+    idx += this->config.joint_num[i];
+  }
+  if (this->isSingular[0]&&this->isSingular[1]) {
+    return false;
+  }
+  
+  ::ul::math::Vector init_q, init_qd, init_qdd;
+  init_q = this->driver.getLastCommandJointPosition();
+  init_qd = this->driver.getLastCommandJointVelocity();
+  init_qdd = this->driver.getLastCommandJointAcceleration();
+
+  ::ul::math::Vector init_x2(12), init_xd2(12), target_x2(12);
+  init_xd2 << init_xd[0], init_xd[1];
+
+  ::ul::math::Vector6 left_pose, right_pose;
+  ::ul::math::Transform left_transform, right_transform;
+  ::ul::math::Quaternion left_quaternion, right_quaternion;
+
+  left_pose = init_x[0];
+  right_pose = init_x[1];
+  ::ul::math::Pose2Transformation(left_pose, left_transform);
+  ::ul::math::Pose2Transformation(right_pose, right_transform);
+  left_quaternion = ::ul::math::Quaternion(left_transform.rotation());
+  right_quaternion = ::ul::math::Quaternion(right_transform.rotation());
+  if (left_quaternion.w() < 0) left_quaternion.coeffs() *= -1;  // 调整四元数方向
+  if (right_quaternion.w() < 0) right_quaternion.coeffs() *= -1;  // 调整四元数方向
+  
+  left_pose.segment<3>(3) = left_quaternion.log().vec();
+  right_pose.segment<3>(3) = right_quaternion.log().vec();
+  init_x2 << left_pose, right_pose;
+  
+  if (!sys_servoL->initialized) {
+    this->moveL_data_[0].first = left_transform;
+    this->moveL_data_[1].first = right_transform;
+    this->moveL_last_quaternion_[0] = left_quaternion;
+    this->moveL_last_quaternion_[1] = right_quaternion;
+  }
+
+  left_pose = pose[0];
+  right_pose = pose[1];
+  ::ul::math::Pose2Transformation(left_pose, left_transform);
+  ::ul::math::Pose2Transformation(right_pose, right_transform);
+  left_quaternion = ::ul::math::Quaternion(left_transform.rotation());
+  right_quaternion = ::ul::math::Quaternion(right_transform.rotation());
+  if (left_quaternion.w() < 0) left_quaternion.coeffs() *= -1;  // 调整四元数方向
+  if (right_quaternion.w() < 0) right_quaternion.coeffs() *= -1;  // 调整四元数方向
+  
+  left_pose.segment<3>(3) = left_quaternion.log().vec();
+  right_pose.segment<3>(3) = right_quaternion.log().vec();
+  target_x2 << left_pose, right_pose;
+
+  ::std::vector<::ul::math::Real> target_x2_vec(target_x2.data(), target_x2.data() + target_x2.size());
+  ::std::vector<::ul::math::Real> init_x2_vec(init_x2.data(), init_x2.data() + init_x2.size());
+  ::std::vector<::ul::math::Real> init_xd2_vec(init_xd2.data(), init_xd2.data() + init_xd2.size());
+
+  sys_servoL->load_target(target_x2_vec, time, init_x2_vec, init_xd2_vec);
+
+  this->cmd_q = this->driver.getLastCommandJointPosition();
+  this->cmd_qd = this->driver.getLastCommandJointVelocity();
+  this->cmd_qdd = this->driver.getLastCommandJointAcceleration();
+  return true;
+}
+
+bool CartesianMotion::servoL_resetParas(const ::ul::math::Real& lookahead_time, const ::ul::math::Real& gain) {
+  int window_size = std::floor(lookahead_time*1000);
+  double dumping = 15.0 + gain/100.0;
+  sys_servoL->resetSys();  //重置系统
+  sys_servoL->resetParas(dumping, window_size);  //一连串调用的第一次写入参数
+
+  return true;
+}
+
+bool CartesianMotion::moveL_trajectory_nullspace(const int& step) {
+  if (0 == step) {
+    for (int i = 0; i < this->moveL_data_.size(); ++i) {
+      this->moveL_last_position_[i] = this->moveL_data_[i].first.translation();
+      this->moveL_last_quaternion_[i] = ::ul::math::Quaternion(this->moveL_data_[i].first.rotation());
+    }
+  }
+
+  ::ul::math::Real time = step * this->driver.getUpdateRate();
+  ::std::vector<::ul::math::Real> x(this->moveL_ssv_.size(), 0);
+  ::std::vector<::ul::math::Real> lambda(this->moveL_ssv_.size(), 0);
+  for (int i = 0; i < this->moveL_ssv_.size(); ++i) {
+    if (0 == this->cartesian_ratio_[i]) {
+      x[i] = this->moveL_ssv_[i].x0_;
+      lambda[i] = 0.0;
+    } else {
+      x[i] = this->moveL_ssv_[i].x(time);
+      lambda[i] = abs(x[i] / this->moveL_ssv_[i].xe_);
+      if (lambda[i] > 1) {
+        lambda[i] = 1;
+      }
+    }
+  }
+
+  // 生成位置轨迹
+  ::std::vector<::ul::math::Vector3> init_pos(2), target_pos(2), interpolated_pos(2);
+  ::std::vector<::ul::math::Quaternion> init_quat(2), target_quat(2), interpolated_quat(2);
+  for (int i = 0; i < 2; ++i) {
+    init_pos[i] = this->moveL_data_[i].first.translation();
+    target_pos[i] = this->moveL_data_[i].second.translation();
+    init_quat[i] = ::ul::math::Quaternion(this->moveL_data_[i].first.rotation());
+    target_quat[i] = ::ul::math::Quaternion(this->moveL_data_[i].second.rotation());
+    interpolated_pos[i] = (1 - lambda[i]) * init_pos[i] + lambda[i] * target_pos[i];  // 位置插值，用前两个索引
+    interpolated_quat[i] = init_quat[i].slerp(lambda[i + 2], target_quat[i]);         // 姿态插值，用后两个索引
+    cmd_x[i].segment<3>(0) = interpolated_pos[i];
+    cmd_x[i].segment<3>(3) = interpolated_quat[i].toRotationMatrix().eulerAngles(2, 1, 0);  // ZYX
+  }
+
+  // 计算笛卡尔空间的速度
+  ::ul::math::Vector3 left_v = (interpolated_pos[0] - this->moveL_last_position_[0]) / this->driver.getUpdateRate();
+  ::ul::math::Vector3 right_v = (interpolated_pos[1] - this->moveL_last_position_[1]) / this->driver.getUpdateRate();
+  ::ul::math::Vector3 left_w = this->moveL_last_quaternion_[0].angularVelocity(interpolated_quat[0], this->driver.getUpdateRate());
+  ::ul::math::Vector3 right_w = this->moveL_last_quaternion_[1].angularVelocity(interpolated_quat[1], this->driver.getUpdateRate());
+  cmd_xd[0] << left_v, left_w;
+  cmd_xd[1] << right_v, right_w;
+
+  // 计算雅可比矩阵，要求左手右手都要存在
+  ::std::vector<::std::string> ee_name = {"Tcp_L", "Tcp_R"};
+  ::std::vector<::std::size_t> ee_idx(ee_name.size());
+  for (int i = 0; i < ee_name.size(); ++i) {
+    ee_idx[i] = this->robot.getFrameId(ee_name[i]);
+  }
+  ::std::vector<::std::string> joint_name = {"Shoulder_Y_L", "Shoulder_Y_R"};
+  ::std::vector<::ul::math::Matrix67> J(2);
+  ::std::vector<::ul::math::Matrix> J_inv(2, ::ul::math::Matrix76::Zero());
+  ::ul::math::Real damping = 0.05;
+  bool dosvd = true;
+  for (int i = 0; i < ee_name.size(); ++i) {
+    if (this->robot.existFrame(ee_name[i])) {
+      this->robot.setOperationalFrameIndex(ee_idx[i]);
+      this->robot.setOperationalFrameName(ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J[i] = this->robot.getJacobian().block<6, 7>(0, this->robot.getJointIndex(joint_name[i]) - 1);
+    } else {
+      ::std::cout << "Frame " << ee_name[i] << " does not exist!" << ::std::endl;
+    }
+  }
+
+  // 计算关节空间的速度
+  ::std::vector<::ul::math::Vector7> qd(2);
+  ::std::vector<::ul::math::Vector7> q(2);
+  ::std::vector<::ul::math::Vector7> ref_q(2);
+  q[0] = this->driver.getLastCommandJointPosition().segment<7>(0);
+  q[1] = this->driver.getLastCommandJointPosition().segment<7>(7);
+  ref_q[0] = this->nullspace_q_ref_.segment<7>(0);
+  ref_q[1] = this->nullspace_q_ref_.segment<7>(7);
+  ::std::cout << "q[0] = " << q[0].transpose() << ::std::endl;
+  ::std::cout << "q[1] = " << q[1].transpose() << ::std::endl;
+  ::std::cout << "ref_q[0] = " << ref_q[0].transpose() << ::std::endl;
+  ::std::cout << "ref_q[1] = " << ref_q[1].transpose() << ::std::endl;
+  for (int i = 0; i < 2; ++i) {
+    this->robot.calculateJacobianInverse_user(J[i], J_inv[i], damping, dosvd);
+    ::ul::math::Matrix In = ::ul::math::Matrix::Identity(7, 7);
+//    ::std::cout << "J_inv*J: \n" << J_inv[i]*J[i] << ::std::endl;
+//    ::std::cout << (In - J_inv[i]*J[i]) << ::std::endl;
+    qd[i] = J_inv[i] * cmd_xd[i] + (In - J_inv[i]*J[i])*(ref_q[i] - q[i]);
+    //    cmd_qd.segment<7>(this->robot.getJointIndex(joint_name[i])-1) = qd[i]; // pinocchio中计算对应的索引和Raisim仿真/实物不一致
+    //        ::std::cout << ee_name[i] << " Jacobian:\n" << J[i] << ::std::endl;
+    //        ::std::cout << ee_name[i] << " Jacobian Inverse:\n" << J_inv[i] << ::std::endl;
+  }
+  cmd_qd.segment<7>(0) = qd[1];  // Raisim 中先右后左再头，qd中用是先左后右无头
+  cmd_qd.segment<7>(7) = qd[0];  // Raisim 中先右后左再头，qd中计算是先左后右无头
+  cmd_q = cmd_q + cmd_qd * driver.getUpdateRate();
+
+  driver.setJointPosition(cmd_q);
+  driver.setJointVelocity(cmd_qd);
+  driver.setJointAcceleration(cmd_qdd);
+
+  // 将计算得到的插值结果赋给上一时刻的Transform
+  for (int i = 0; i < 2; ++i) {
+    this->moveL_last_position_[i] = interpolated_pos[i];
+    this->moveL_last_quaternion_[i] = interpolated_quat[i];
+  }
+  return true;
+}
+
+bool CartesianMotion::moveL_trajectory(const int& step) {
+  if (0 == step) {
+    for (int i = 0; i < this->moveL_data_.size(); ++i) {
+      this->moveL_last_position_[i] = this->moveL_data_[i].first.translation();
+      this->moveL_last_quaternion_[i] = ::ul::math::Quaternion(this->moveL_data_[i].first.rotation());
+    }
+  }
+
+  ::ul::math::Real time = step * this->driver.getUpdateRate();
+  ::std::vector<::ul::math::Real> x(this->moveL_ssv_.size(), 0);
+  ::std::vector<::ul::math::Real> lambda(this->moveL_ssv_.size(), 0);
+  for (int i = 0; i < this->moveL_ssv_.size(); ++i) {
+    if (0 == this->cartesian_ratio_[i]) {
+      x[i] = this->moveL_ssv_[i].x0_;
+      lambda[i] = 0.0;
+    } else {
+      x[i] = this->moveL_ssv_[i].x(time);
+      if (this->moveL_ssv_[i].xe_ == 0) {
+        lambda[i] = 1;
+      } else {
+        lambda[i] = abs(x[i] / this->moveL_ssv_[i].xe_);
+      }
+      if (lambda[i] > 1) {
+        lambda[i] = 1;
+      }
+    }
+  }
+
+  // 生成位置轨迹
+  ::std::vector<::ul::math::Vector3> init_pos(2), target_pos(2), interpolated_pos(2);
+  ::std::vector<::ul::math::Quaternion> init_quat(2), target_quat(2), interpolated_quat(2);
+  for (int i = 0; i < 2; ++i) {
+    init_pos[i] = this->moveL_data_[i].first.translation();
+    target_pos[i] = this->moveL_data_[i].second.translation();
+    init_quat[i] = ::ul::math::Quaternion(this->moveL_data_[i].first.rotation());
+    target_quat[i] = ::ul::math::Quaternion(this->moveL_data_[i].second.rotation());
+    interpolated_pos[i] = (1 - lambda[i]) * init_pos[i] + lambda[i] * target_pos[i];  // 位置插值，用前两个索引
+    interpolated_quat[i] = init_quat[i].slerp(lambda[i + 2], target_quat[i]);         // 姿态插值，用后两个索引
+    cmd_x[i].segment<3>(0) = interpolated_pos[i];
+    cmd_x[i].segment<3>(3) = interpolated_quat[i].toRotationMatrix().eulerAngles(2, 1, 0);  // ZYX
+  }
+
+  // TODO: 此处的cmd_x与cmd_q之间并非严格的顺逆运动学的关系，会导致cmd_x在第一个点处有跳变，而cmd_q依然连续。
+  // 计算笛卡尔空间的速度
+  ::ul::math::Vector3 left_v = (interpolated_pos[0] - this->moveL_last_position_[0]) / this->driver.getUpdateRate();
+  ::ul::math::Vector3 right_v = (interpolated_pos[1] - this->moveL_last_position_[1]) / this->driver.getUpdateRate();
+  ::ul::math::Vector3 left_w = this->moveL_last_quaternion_[0].angularVelocity(interpolated_quat[0], this->driver.getUpdateRate());
+  ::ul::math::Vector3 right_w = this->moveL_last_quaternion_[1].angularVelocity(interpolated_quat[1], this->driver.getUpdateRate());
+  cmd_xd[0] << left_v, left_w;
+  cmd_xd[1] << right_v, right_w;
+
+  ::std::vector<::ul::math::Matrix> J(2), J_inv(2), J_temp(2);
+  ::std::vector<::ul::math::Vector> qd(2);
+  ::ul::math::Real damping = 0.05;
+  bool dosvd = true;
+  int idx = 0;
+  
+  for (int i = 0; i < 2; ++i) {
+    int chain_dim = this->urdf_chain_idx_[i].size();
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian()(Eigen::all, this->urdf_chain_idx_[i]);
+      if (chain_dim < 6){
+        J[i].resize(chain_dim, chain_dim);
+        for (int j = 0; j < chain_dim; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);  // 选取的笛卡尔空间自由度，后续修改
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+    }
+
+    // 计算关节空间的速度
+    ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity()(alg_chain_idx_[i]);
+    if (!isSingular[i]) {
+      if (this->robot.isSingular(J[i], damping)) {
+        isSingular[i] = true;
+        ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+        if (max_abs > 0.01) {
+          singular_qd[i] = qd_temp/max_abs;
+        } else {
+          singular_qd[i].resize(chain_dim);
+          singular_qd[i].setZero();
+        }
+        ::std::cout << RED << "[Error moveL] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } 
+    }
+  
+    if (isSingular[i]) {
+      ::ul::math::Real a_max;
+      if (max_length > step){
+        a_max = ::std::max(1.0, qd_temp.cwiseAbs().maxCoeff()/((max_length - step)*this->driver.getUpdateRate()));
+      } else {
+        a_max = 0;
+      }
+      ::ul::math::Vector delta_v = -singular_qd[i]*a_max*this->driver.getUpdateRate();
+      auto cond1 = qd_temp.array().abs() <= delta_v.array().abs();
+      auto cond2 = delta_v.array().abs() < 1e-10;  // 使用小阈值判断零
+      qd[i] = (cond1 || cond2).select(0.0, qd_temp + delta_v);
+    } else {
+      singular_qd[i].setZero();
+      this->robot.calculateJacobianInverse_user(J[i], J_inv[i], damping, dosvd);
+      if (chain_dim < 6){
+        ::ul::math::Vector cmd_xd_temp(chain_dim);
+        for (int j = 0; j < chain_dim; ++j) {
+          cmd_xd_temp[j] = cmd_xd[i][this->config.cartesian_select[i][j]];
+        }
+        qd[i] = J_inv[i] * cmd_xd_temp;
+      } else {
+        qd[i] = J_inv[i] * cmd_xd[i];
+      }
+    }
+    cmd_qd(alg_chain_idx_[i]) = qd[i];
+  }
+  cmd_qd(alg_chain_idx_[0][0]) += qd[0][0]; 
+  
+  cmd_q = cmd_q + cmd_qd * driver.getUpdateRate();
+  cmd_qdd = (cmd_qd - driver.getLastCommandJointVelocity())/driver.getUpdateRate();
+
+  driver.setJointPosition(cmd_q);
+  driver.setJointVelocity(cmd_qd);
+  driver.setJointAcceleration(cmd_qdd);
+
+  // 将计算得到的插值结果赋给上一时刻的Transform
+  for (int i = 0; i < 2; ++i) {
+    this->moveL_last_position_[i] = interpolated_pos[i];
+    this->moveL_last_quaternion_[i] = interpolated_quat[i];
+  }
+  return true;
+}
+
+bool CartesianMotion::moveL_path_trajectory(const int& step) {
+  if (0 == step) {
+    for (int i = 0; i < this->moveL_data_.size(); ++i) {
+      this->moveL_last_position_[i] = this->moveL_data_[i].first.translation();
+      this->moveL_last_quaternion_[i] = ::ul::math::Quaternion(this->moveL_data_[i].first.rotation());
+    }
+  }
+  ::ul::math::Real time = step * this->driver.getUpdateRate();
+
+  // 对数四元数生成轨迹
+  for (int j = 0; j < 12; ++j) {
+    cmd_x[j / 6][j % 6] = this->moveL_spline_[j](time);
+    cmd_xd[j / 6][j % 6] = this->moveL_spline_[j](time, 1);
+    cmd_xdd[j / 6][j % 6] = this->moveL_spline_[j](time, 2);
+  }
+
+  // 对生成的的姿态重新转换
+  ::std::vector<::ul::math::Quaternion> inter_quat(2);
+  for (int j = 0; j < inter_quat.size(); ++j) {
+    inter_quat[j].vec() = cmd_x[j].segment<3>(3);
+    inter_quat[j].w() = 0;
+    inter_quat[j] = inter_quat[j].exp();
+    inter_quat[j].normalize();
+    cmd_x[j].segment<3>(3) = inter_quat[j].toRotationMatrix().eulerAngles(2, 1, 0);
+    cmd_xd[j].segment<3>(3) = this->moveL_last_quaternion_[j].angularVelocity(inter_quat[j], this->driver.getUpdateRate());
+  }
+
+  ::std::vector<::ul::math::Matrix> J(2), J_inv(2), J_temp(2);
+  ::std::vector<::ul::math::Vector> qd(2);
+  ::ul::math::Real damping = 0.05;
+  bool dosvd = true;
+  int idx = 0;
+  
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+    }
+
+    // 计算关节空间的速度
+    ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+    if (!isSingular[i]) {
+      if (this->robot.isSingular(J[i], damping)) {
+        isSingular[i] = true;
+        ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+        if (max_abs > 0.01) {
+          singular_qd[i] = qd_temp/max_abs;
+        } else {
+          singular_qd[i].resize(this->config.joint_num[i]);
+          singular_qd[i].setZero();
+        }
+        ::std::cout << RED << "[Error moveL_path] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } 
+    }
+  
+    if (isSingular[i]) {
+      ::ul::math::Real a_max;
+      if (max_length > step){
+        a_max = ::std::max(1.0, qd_temp.cwiseAbs().maxCoeff()/((max_length - step)*this->driver.getUpdateRate()));
+      } else {
+        a_max = 0;
+      }
+      ::ul::math::Vector delta_v = -singular_qd[i]*a_max*this->driver.getUpdateRate();
+      auto cond1 = qd_temp.array().abs() <= delta_v.array().abs();
+      auto cond2 = delta_v.array().abs() < 1e-10;  // 使用小阈值判断零
+      qd[i] = (cond1 || cond2).select(0.0, qd_temp + delta_v);
+    } else {
+      singular_qd[i].setZero();
+      this->robot.calculateJacobianInverse_user(J[i], J_inv[i], damping, dosvd);
+      // if (this->config.joint_num[i] < 6) { 
+      // qd[i] = J_inv[i] * cmd_xd[i].segment(0, 3);
+      // } else {
+      // qd[i] = J_inv[i] * cmd_xd[i];
+      // } 
+      if (this->config.joint_num[i] < 6){
+        ::ul::math::Vector cmd_xd_temp(this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          cmd_xd_temp[j] = cmd_xd[i][this->config.cartesian_select[i][j]];
+        }
+        qd[i] = J_inv[i] * cmd_xd_temp;
+      } else {
+        qd[i] = J_inv[i] * cmd_xd[i];
+      }
+    }
+    cmd_qd.segment(idx, this->config.joint_num[i]) = qd[i]; 
+    idx += this->config.joint_num[i];
+  }
+  ///////////////////////////////////////////////
+
+  cmd_q = cmd_q + cmd_qd * driver.getUpdateRate();
+  cmd_qdd = (cmd_qd - driver.getLastCommandJointVelocity())/driver.getUpdateRate();
+
+  driver.setJointPosition(cmd_q);
+  driver.setJointVelocity(cmd_qd);
+  driver.setJointAcceleration(cmd_qdd);
+
+  // 将计算得到的插值结果赋给上一时刻的Transform
+  for (int i = 0; i < 2; ++i) {
+    this->moveL_last_position_[i] = cmd_x[i].head(3);
+    this->moveL_last_quaternion_[i] = inter_quat[i];
+  }
+  return true;
+}
+
+bool CartesianMotion::speedL_trajectory(const int& step) {
+  for (int i = 0; i < this->speedL_ratio_.size(); ++i) {
+    for (int j = 0; j < this->speedL_ratio_[i].size(); ++j) {
+      if (0 == this->speedL_ratio_[i][j]) {
+        cmd_xd[i][j] = this->speedL_sv_[i][j].v0_;
+        cmd_xdd[i][j] = 0;
+      } else {
+        cmd_xd[i][j] = this->speedL_sv_[i][j].v(step*this->driver.getUpdateRate());
+        cmd_xdd[i][j] = this->speedL_sv_[i][j].a(step*this->driver.getUpdateRate());
+      }
+    }
+  }
+
+  ::std::vector<::ul::math::Matrix> J(2), J_inv(2), J_temp(2);
+  ::std::vector<::ul::math::Vector> qd(2);
+  ::ul::math::Real damping = 0.05;
+  bool dosvd = true;
+  int idx = 0;
+  
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+    }
+    // 计算关节空间的速度
+    ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+    if (!isSingular[i]) {
+      if (this->robot.isSingular(J[i], damping)) {
+        isSingular[i] = true;
+        ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+        if (max_abs > 0.01) {
+          singular_qd[i] = qd_temp/max_abs;
+        } else {
+          singular_qd[i].resize(this->config.joint_num[i]);
+          singular_qd[i].setZero();
+        }
+        ::std::cout << RED << "[Error speedL] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } 
+    }
+    if (isSingular[i]) {
+      ::ul::math::Real a_max = 1.0;
+      ::ul::math::Vector delta_v = -singular_qd[i]*a_max*this->driver.getUpdateRate();
+      auto cond1 = qd_temp.array().abs() <= delta_v.array().abs();
+      auto cond2 = delta_v.array().abs() < 1e-10;  // 使用小阈值判断零
+      qd[i] = (cond1 || cond2).select(0.0, qd_temp + delta_v);
+    } else {
+      singular_qd[i].setZero();
+      this->robot.calculateJacobianInverse_user(J[i], J_inv[i], damping, dosvd);
+      // if (this->config.joint_num[i] < 6) { 
+      //   qd[i] = J_inv[i] * cmd_xd[i].segment(0, 3);
+      // } else {
+      //   qd[i] = J_inv[i] * cmd_xd[i];
+      // } 
+      if (this->config.joint_num[i] < 6){
+        ::ul::math::Vector cmd_xd_temp(this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          cmd_xd_temp[j] = cmd_xd[i][this->config.cartesian_select[i][j]];
+        }
+        qd[i] = J_inv[i] * cmd_xd_temp;
+      } else {
+        qd[i] = J_inv[i] * cmd_xd[i];
+      }
+    }
+    cmd_qd.segment(idx, this->config.joint_num[i]) = qd[i]; 
+    idx += this->config.joint_num[i];
+  }
+
+  cmd_q = cmd_q + cmd_qd * this->driver.getUpdateRate();
+  cmd_qdd = (cmd_qd - driver.getLastCommandJointVelocity())/driver.getUpdateRate();
+
+  this->driver.setJointPosition(cmd_q);
+  this->driver.setJointVelocity(cmd_qd);
+  this->driver.setJointAcceleration(cmd_qdd);
+
+  return true;
+}
+
+bool CartesianMotion::servoL_trajectoryGenerated(const int &step) {
+  ::ul::math::Real time = (step+1) * this->driver.getUpdateRate();
+  bool reach = sys_servoL->update();
+
+  // 对数四元数生成轨迹
+  for (int j = 0; j < 12; ++j) {
+    cmd_x[j / 6][j % 6] = this->sys_servoL->x[j];
+    cmd_xd[j / 6][j % 6] = this->sys_servoL->v[j];
+    cmd_xdd[j / 6][j % 6] = this->sys_servoL->a[j];
+  }
+
+  // 对生成的的姿态重新转换
+  ::std::vector<::ul::math::Quaternion> inter_quat(2);
+  for (int j = 0; j < inter_quat.size(); ++j) {
+    inter_quat[j].vec() = cmd_x[j].segment<3>(3);
+    inter_quat[j].w() = 0;
+    inter_quat[j] = inter_quat[j].exp();
+    inter_quat[j].normalize();
+    cmd_x[j].segment<3>(3) = inter_quat[j].toRotationMatrix().eulerAngles(2, 1, 0);
+    cmd_xd[j].segment<3>(3) = this->moveL_last_quaternion_[j].angularVelocity(inter_quat[j], this->driver.getUpdateRate());
+  }
+
+  ::std::vector<::ul::math::Matrix> J(2), J_inv(2), J_temp(2);
+  ::std::vector<::ul::math::Vector> qd(2);
+  ::ul::math::Real damping = 0.05;
+  bool dosvd = true;
+  int idx = 0;
+  
+  for (int i = 0; i < 2; ++i) {
+    // 计算雅可比矩阵，要求左手右手都要存在
+    if (this->robot.existFrame(this->config.ee_name[i])) {
+      this->robot.setOperationalFrameIndex(this->config.ee_idx[i]);
+      this->robot.setOperationalFrameName(this->config.ee_name[i]);
+      this->robot.calculateJacobian(1);
+      // 颈部两个关节、两条手臂都存在时的urdf，Shoulder_Y_L 对应的关节ID为 3，Shoulder_Y_R 对应的关节ID为 10，对应到雅可比矩阵的索引应该减 1
+      J_temp[i] = this->robot.getJacobian().block(0, this->config.joint_idx_first[i] - 1, 6, this->config.joint_num[i]);
+      if (this->config.joint_num[i] < 6){
+        J[i].resize(this->config.joint_num[i], this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          J[i].row(j) = J_temp[i].row(this->config.cartesian_select[i][j]);
+        }
+      } else {
+        J[i] = J_temp[i];
+      }
+    } else {
+      ::std::cout << "Frame " << this->config.ee_name[i] << " does not exist!" << ::std::endl;
+    }
+    // 计算关节空间的速度
+    ::ul::math::Vector qd_temp = driver.getLastCommandJointVelocity().segment(idx, this->config.joint_num[i]);
+    if (!isSingular[i]) {
+      if (this->robot.isSingular(J[i], damping)) {
+        isSingular[i] = true;
+        ::ul::math::Real max_abs = qd_temp.cwiseAbs().maxCoeff();
+        if (max_abs > 0.01) {
+          singular_qd[i] = qd_temp/max_abs;
+        } else {
+          singular_qd[i].resize(this->config.joint_num[i]);
+          singular_qd[i].setZero();
+        }
+        ::std::cout << RED << "[Error servoL] " << this->config.arm_type[i] << " is almost singular!" << RESET << std::endl;
+      } 
+    }
+    if (isSingular[i]) {
+      ::ul::math::Real a_max = 1.0;
+      ::ul::math::Vector delta_v = -singular_qd[i]*a_max*this->driver.getUpdateRate();
+      auto cond1 = qd_temp.array().abs() <= delta_v.array().abs();
+      auto cond2 = delta_v.array().abs() < 1e-10;  // 使用小阈值判断零
+      qd[i] = (cond1 || cond2).select(0.0, qd_temp + delta_v);
+    } else {
+      singular_qd[i].setZero();
+      this->robot.calculateJacobianInverse_user(J[i], J_inv[i], damping, dosvd);
+      // if (this->config.joint_num[i] < 6) { 
+      //   qd[i] = J_inv[i] * cmd_xd[i].segment(0, 3);
+      // } else {
+      //   qd[i] = J_inv[i] * cmd_xd[i];
+      // } 
+      if (this->config.joint_num[i] < 6){
+        ::ul::math::Vector cmd_xd_temp(this->config.joint_num[i]);
+        for (int j = 0; j < this->config.joint_num[i]; ++j) {
+          cmd_xd_temp[j] = cmd_xd[i][this->config.cartesian_select[i][j]];
+        }
+        qd[i] = J_inv[i] * cmd_xd_temp;
+      } else {
+        qd[i] = J_inv[i] * cmd_xd[i];
+      }
+    }
+    cmd_qd.segment(idx, this->config.joint_num[i]) = qd[i]; 
+    idx += this->config.joint_num[i];
+  }
+  cmd_q = cmd_q + cmd_qd * driver.getUpdateRate();
+  cmd_qdd = (cmd_qd - driver.getLastCommandJointVelocity())/driver.getUpdateRate();
+
+  this->driver.setJointPosition(cmd_q);
+  this->driver.setJointVelocity(cmd_qd);
+  this->driver.setJointAcceleration(cmd_qdd);
+
+  // 将计算得到的插值结果赋给上一时刻的Transform
+  for (int i = 0; i < 2; ++i) {
+    this->moveL_last_position_[i] = cmd_x[i].head(3);
+    this->moveL_last_quaternion_[i] = inter_quat[i];
+  }
+
+  for(int i=0; i < this->dof; i++) {
+      reach &=  (std::abs(cmd_qdd[i]) < 0.01) & (std::abs(cmd_qd[i]) < 0.001);
+  }
+  
+  return reach;
+}
+
+}  // namespace controller
+}  // namespace ul
